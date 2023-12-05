@@ -61,7 +61,7 @@ function Form({
       .catch((err) => {
         console.error(err);
       });
-  }, [option?.url]);
+  }, [option?.url, onOverlayData, option?.id]);
 
   const handleChange = useCallback((event: SelectChangeEvent) => {
     setFile(undefined);
@@ -89,12 +89,12 @@ function Form({
       console.error(e);
     };
     reader.readAsText(file);
-  }, []);
+  }, [onOverlayData]);
 
   const handleUnsetFileChange = useCallback(() => {
     setFile(undefined);
     onOverlayData({ overlay: undefined, data: {} });
-  }, []);
+  }, [onOverlayData]);
 
   return (
     <Paper style={{ padding: "1em", marginBottom: "1em" }} elevation={1}>
@@ -106,9 +106,9 @@ function Form({
           value={option ? JSON.stringify(option) : ""}
           onChange={handleChange}
         >
-          {(options ?? []).map(({ name, ocabundle }) => (
+          {(options ?? []).map(({ name, ocabundle }, idx) => (
             <MenuItem
-              key={name}
+              key={`${name}_${idx}`}
               value={JSON.stringify({
                 id: name,
                 url: BUNDLE_LIST_URL + "/" + ocabundle,

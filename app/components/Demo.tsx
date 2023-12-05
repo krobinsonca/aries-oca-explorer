@@ -1,7 +1,10 @@
 import React from "react";
 import { Typography, Link } from "@mui/material";
-import Joyride, { STATUS, ACTIONS } from "react-joyride";
+import { STATUS, ACTIONS } from "react-joyride";
 import { Theme } from "@mui/material/styles";
+import dynamic from "next/dynamic";
+
+const Joyride = dynamic(() => import("react-joyride"), { ssr: false });
 
 const demoStates = {
   introSteps: [
@@ -9,9 +12,15 @@ const demoStates = {
       target: "body",
       disableBeacon: true,
       position: "center",
-      title: <Typography variant="h3">What Is OCA Explorer?</Typography>,
+      title: (
+        <React.Fragment>
+          <Typography variant="h5" component="span">
+            What Is OCA Explorer?
+          </Typography>
+        </React.Fragment>
+      ),
       content: (
-        <Typography variant="h5">
+        <p>
           The OCA Explorer is intended to assist in creating{" "}
           <Link href="https://oca.colossi.network/">
             Overlays Capture Architecture (OCA)
@@ -21,81 +30,119 @@ const demoStates = {
             Branding Overlays
           </Link>
           .
-        </Typography>
+        </p>
       ),
     },
     {
       target: "#overlay-bundle-id",
       position: "center",
       disableBeacon: true,
-      title: <Typography variant="h3">Selecting an OCA Bundle</Typography>,
+      title: (
+        <React.Fragment>
+          <Typography variant="h5" component="span">
+            Selecting an OCA Bundle
+          </Typography>
+        </React.Fragment>
+      ),
       content: (
-        <Typography variant="h5">
+        <p>
           Here you can select a Pre-existing OCA Bundle
-        </Typography>
+        </p>
       ),
     },
     {
       target: "#upload-oca-bundle-button",
-      title: <Typography variant="h3">Uploading a new OCA Bundle</Typography>,
+      title: (
+        <React.Fragment>
+          <Typography variant="h5" component="span">
+            Uploading a new OCA Bundle
+          </Typography>
+        </React.Fragment>
+      ),
       content: (
-        <Typography variant="h5">
+        <p>
           If you would like to upload your own OCA Bundle click here
-        </Typography>
+        </p>
       ),
     },
   ],
   brandingSteps: [
     {
       target: "#overlay-bundle-language-select",
-      title: <Typography variant="h3">Previewing Languages</Typography>,
+      title: (
+        <React.Fragment>
+          <Typography variant="h5" component="span">
+            Previewing Languages
+          </Typography>
+        </React.Fragment>
+      ),
       disableBeacon: true,
       content: (
-        <Typography variant="h5">
+        <p>
           To preview alternative languages select one of the following radio
           buttons
-        </Typography>
+        </p>
       ),
     },
     {
       target: "#overlay-bundle-credential-card",
-      title: <Typography variant="h3">Credential List Layout</Typography>,
+      title: (
+        <React.Fragment>
+          <Typography variant="h5" component="span">
+            Credential List Layout
+          </Typography>
+        </React.Fragment>
+      ),
       content: (
-        <Typography variant="h5">
+        <p>
           This is the current Credential List Layout
-        </Typography>
+        </p>
       ),
     },
     {
       target: "#overlay-bundle-credential-details",
-      title: <Typography variant="h3">Single Credential Layout</Typography>,
+      title: (
+        <React.Fragment>
+          <Typography variant="h5" component="span">
+            Single Credential Layout
+          </Typography>
+        </React.Fragment>
+      ),
       content: (
-        <Typography variant="h5">
+        <p>
           Here is the current Single Credential Layout
-        </Typography>
+        </p>
       ),
     },
     {
       target: "#overlay-bundle-branding-form-fields",
-      title: <Typography variant="h3">Customizing Branding</Typography>,
+      title: (
+        <React.Fragment>
+          <Typography variant="h5" component="span">
+            Customizing Branding
+          </Typography>
+        </React.Fragment>
+      ),
       content: (
-        <Typography variant="h5">
+        <p>
           Here you can customize the branding for your overlay
-        </Typography>
+        </p>
       ),
     },
     {
       target: "#overlay-branding-download-branding-overlay",
+      // title: "Download Your Newly Created Branding",
       title: (
-        <Typography variant="h3">
-          Download Your Newly Created Branding
-        </Typography>
+        <React.Fragment>
+          <Typography variant="h5" component="span">
+            Download Your Newly Created Branding
+          </Typography>
+        </React.Fragment>
       ),
       content: (
-        <Typography variant="h5">
-          Once you are all done you can download your newly created
-          branding.json
-        </Typography>
+        <p>
+          Once you are all done you can download your newly created branding.json
+        </p>
       ),
     },
   ],

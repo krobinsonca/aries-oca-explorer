@@ -21,6 +21,7 @@ function AttributeValue({
               height: size,
               width: size,
             }}
+            alt="Image"
             style={{
               marginTop: 4,
             }}

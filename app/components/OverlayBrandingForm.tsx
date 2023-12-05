@@ -44,7 +44,7 @@ function OverlayBrandingForm({
           secondaryAttribute: overlay?.branding?.secondaryAttribute ?? "",
         },
       });
-  }, [overlay]);
+  }, [overlay, dispatch]);
 
   return (
     <div id="overlay-bundle-branding-form">

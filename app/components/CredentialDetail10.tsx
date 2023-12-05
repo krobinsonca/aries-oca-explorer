@@ -22,6 +22,7 @@ function computedStyles(): Record<
   string,
   CSSProperties | Record<string, number>
 > {
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const branding = useBranding();
 
   return {
@@ -98,6 +99,7 @@ function DetailLogo({
       {branding?.logo ? (
         <Image
           source={branding?.logo}
+          alt="Logo"
           style={{
             resizeMode: "cover",
             width: logoHeight,
@@ -132,6 +134,7 @@ function DetailSecondaryBody({
           imageStyle={{
             resizeMode: "cover",
           }}
+          alt="Background"
         >
           <View style={styles?.secondaryBodyContainer} />
         </ImageBackground>
