@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@aries-framework/core": "^0.4.2",
+    "@aries-framework/core": "^0.3.3",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@hyperledger/aries-oca": "^1.0.0-alpha.7",
@@ -22,9 +22,12 @@
     "next": "14.0.3",
     "react": "^18",
     "react-dom": "^18",
+    "react-joyride": "^2.7.0",
     "react-native-web": "^0.19.9"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/lodash.startcase": "^4.4.9",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
