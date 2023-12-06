@@ -19,6 +19,10 @@ export enum ActionType {
   EXPIRY_DATE_ATTRIBUTE = "expiryDateAttribute",
 }
 
+export enum BrandingVersion {
+  V10 = "aries/overlays/branding/1.0"
+}
+
 export interface BrandingState {
   captureBase?: string;
   type?: string;
@@ -36,7 +40,7 @@ export interface BrandingState {
 
 const initialState: BrandingState = {
   captureBase: "",
-  type: "",
+  type: BrandingVersion.V10,
   digest: "",
   logo: "",
   backgroundImage: "",
