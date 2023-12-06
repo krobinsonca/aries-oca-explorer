@@ -83,7 +83,6 @@ jobs:
 
   # Deployment job
   deploy:
-    if: ((github.repository == vars.REPOSITORY) || (github.repository == 'bcgov/aries-oca-explorer'))
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
