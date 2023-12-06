@@ -12,7 +12,7 @@
     "@aries-framework/core": "^0.3.3",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
-    "@hyperledger/aries-oca": "^1.0.0-alpha.7",
+    "@hyperledger/aries-oca": "^1.0.0-alpha.155",
     "@mui/icons-material": "^5.14.19",
     "@mui/material": "^5.14.20",
     "csv-parse": "^5.5.2",
