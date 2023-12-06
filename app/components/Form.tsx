@@ -12,7 +12,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 import OverlayBundleFactory from "../services/OverlayBundleFactory";
 import { Clear, UploadFile } from "@mui/icons-material";
-import { OverlayBundle } from "@hyperledger/aries-oca/build/types";
+import { OverlayBundle } from "@hyperledger/aries-oca";
 
 const BUNDLE_LIST_URL =
   "https://raw.githubusercontent.com/bcgov/aries-oca-bundles/main";

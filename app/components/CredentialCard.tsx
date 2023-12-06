@@ -1,5 +1,5 @@
 import React from "react";
-import { OverlayBundle } from "@hyperledger/aries-oca/build/types";
+import { OverlayBundle } from "@hyperledger/aries-oca";
 import CredentialCard10 from "./CredentialCard10";
 import { CredentialExchangeRecord } from "@aries-framework/core";
 

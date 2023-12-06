@@ -27,6 +27,7 @@ concurrency:
 jobs:
   # Build job
   build:
+    if: ((github.repository == vars.REPOSITORY) || (github.repository == 'bcgov/aries-oca-explorer'))
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -75,8 +76,6 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
-      - name: Static HTML export with Next.js
-        run: ${{ steps.detect-package-manager.outputs.runner }} next export
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
@@ -84,6 +83,7 @@ jobs:
 
   # Deployment job
   deploy:
+    if: ((github.repository == vars.REPOSITORY) || (github.repository == 'bcgov/aries-oca-explorer'))
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

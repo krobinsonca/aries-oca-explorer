@@ -1,11 +1,11 @@
 import React, { CSSProperties } from "react";
 import { Text, View, Image, ImageBackground } from "react-native";
 import { BrandingState, useBranding } from "../contexts/Branding";
-import { OverlayBundle } from "@hyperledger/aries-oca/build/types";
-import { textColorForBackground } from "@hyperledger/aries-oca/build/utils/color";
+import { OverlayBundle } from "@hyperledger/aries-oca";
+import { textColorForBackground } from "@hyperledger/aries-oca";
 import { CredentialExchangeRecord } from "@aries-framework/core";
 import { useMemo, useState } from "react";
-import { CredentialFormatter, DisplayAttribute, LocalizedCredential } from "@hyperledger/aries-oca/build/formatters/Credential";
+import { CredentialFormatter, DisplayAttribute, LocalizedCredential } from "@hyperledger/aries-oca";
 import AttributeLabel from "./AttributeLabel";
 import AttributeValue from "./AttributeValue";
 
