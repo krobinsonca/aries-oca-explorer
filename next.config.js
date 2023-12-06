@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    output: 'export',
     // https://nextjs.org/docs/api-reference/next.config.js/custom-webpack-config
     webpack: (config, { }) => {
         config.resolve.alias['react-native$'] = 'react-native-web'

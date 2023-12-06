@@ -16,7 +16,7 @@ import {
 } from "../contexts/Branding";
 import { saveAs } from "file-saver";
 import BrandingOverlayDataFactory from "../services/OverlayBrandingDataFactory";
-import { OverlayBundle } from "@hyperledger/aries-oca/build/types";
+import { OverlayBundle } from "@hyperledger/aries-oca";
 import ImageField from "./ImageField";
 
 function OverlayBrandingForm({

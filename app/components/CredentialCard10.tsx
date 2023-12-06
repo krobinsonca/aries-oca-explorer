@@ -1,11 +1,11 @@
 import React, { CSSProperties } from "react";
 import { Text, View, Image, ImageBackground } from "react-native";
-import { useBranding } from "../contexts/Branding";
-import { OverlayBundle } from "@hyperledger/aries-oca/build/types";
-import { textColorForBackground } from "@hyperledger/aries-oca/build/utils/color";
+import { BrandingState, useBranding } from "../contexts/Branding";
+import { OverlayBundle } from "@hyperledger/aries-oca";
+import { textColorForBackground } from "@hyperledger/aries-oca";
 import { CredentialExchangeRecord } from "@aries-framework/core";
 import { useMemo, useState } from "react";
-import { CredentialFormatter, DisplayAttribute, LocalizedCredential } from "@hyperledger/aries-oca/build/formatters/Credential";
+import { CredentialFormatter, DisplayAttribute, LocalizedCredential } from "@hyperledger/aries-oca";
 import AttributeLabel from "./AttributeLabel";
 import AttributeValue from "./AttributeValue";
 
@@ -14,8 +14,7 @@ const borderRadius = 10;
 const padding = width * 0.05;
 const logoHeight = width * 0.12;
 
-function computedStyles(): Record<string, CSSProperties> {
-  const branding = useBranding();
+function computedStyles(branding: BrandingState | null): Record<string, CSSProperties> {
 
   return {
     container: {
@@ -169,6 +168,7 @@ function Attribute({
             height: logoHeight,
             width: logoHeight,
           }}
+          alt="Image"
           style={{
             marginTop: 4,
           }}
@@ -225,6 +225,7 @@ function CardLogo({
       {branding?.logo ? (
         <Image
           source={branding?.logo}
+          alt="Logo"
           style={{
             resizeMode: "cover",
             width: logoHeight,
@@ -346,7 +347,8 @@ function CredentialCard10({
   record?: CredentialExchangeRecord;
   language?: string;
 }) {
-  const styles = computedStyles();
+  const branding = useBranding();
+  const styles = computedStyles(branding);
 
   const [formatter, setFormatter] = useState<CredentialFormatter | undefined>();
 

@@ -8,7 +8,7 @@ import {
   CredentialPreviewAttribute,
   CredentialState,
 } from "@aries-framework/core";
-import { OverlayBundle } from '@hyperledger/aries-oca/build/types';
+import { OverlayBundle } from '@hyperledger/aries-oca';
 import theme from './theme';
 import { CssBaseline } from "@mui/material";
 import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";

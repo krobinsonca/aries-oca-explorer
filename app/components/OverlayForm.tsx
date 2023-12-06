@@ -16,7 +16,7 @@ import { BrandingProvider } from "../contexts/Branding";
 import CredentialCard from "./CredentialCard";
 import CredentialDetail from "./CredentialDetail";
 import OverlayBrandingForm from "./OverlayBrandingForm";
-import { OverlayBundle } from "@hyperledger/aries-oca/build/types";
+import { OverlayBundle } from "@hyperledger/aries-oca";
 
 import { Info } from "@mui/icons-material";
 import { CredentialExchangeRecord } from "@aries-framework/core";
