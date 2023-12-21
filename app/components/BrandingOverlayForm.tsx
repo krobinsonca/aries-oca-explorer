@@ -19,7 +19,7 @@ import BrandingOverlayDataFactory from "../services/OverlayBrandingDataFactory";
 import { OverlayBundle } from "@hyperledger/aries-oca";
 import ImageField from "./ImageField";
 
-function OverlayBrandingForm({
+export default function BrandingOverlayForm({
   overlay,
 }: {
   overlay?: OverlayBundle;
@@ -195,6 +195,4 @@ function OverlayBrandingForm({
       </FormControl>
     </div>
   );
-}
-
-export default OverlayBrandingForm;
+};

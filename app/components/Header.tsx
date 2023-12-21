@@ -1,30 +1,10 @@
 import React from "react";
 import { AppBar, Toolbar } from "@mui/material";
-import { Info } from "@mui/icons-material";
+// import { Info } from "@mui/icons-material";
 import imgUrl from "../assets/images/BCID_H_rgb_rev.svg";
 import Image from "next/image";
 
-export default function Header({ callback }: { callback: () => any }) {
-  const displayDesktop = (callback: () => any) => {
-    return (
-      <Toolbar>
-        <Image
-          src={imgUrl}
-          alt="Go to the Government of British Columbia website"
-          style={{
-            width: "100%",
-            height: "100%",
-            maxHeight: "48px",
-            flex: 1,
-          }}
-        />
-        <button onClick={callback}>
-          <Info />
-        </button>
-      </Toolbar>
-    );
-  };
-
+export default function Header() {
   return (
     <header style={{ paddingBottom: "10px" }}>
       <AppBar
@@ -36,7 +16,21 @@ export default function Header({ callback }: { callback: () => any }) {
           justifyContent: "left",
         }}
       >
-        {displayDesktop(callback)}
+        <Toolbar>
+          <Image
+            src={imgUrl}
+            alt="Go to the Government of British Columbia website"
+            style={{
+              width: "100%",
+              height: "100%",
+              maxHeight: "48px",
+              flex: 1,
+            }}
+          />
+          {/* <button onClick={callback}>
+          <Info />
+        </button> */}
+        </Toolbar>
       </AppBar>
     </header>
   );

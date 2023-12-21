@@ -1,3 +1,5 @@
+'use client';
+
 import React from "react";
 import {
   Card,
@@ -8,25 +10,24 @@ import {
   Radio,
   RadioGroup,
   Tooltip,
-  Typography,
+  Typography
 } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2/Grid2";
 import { useCallback, useEffect, useState } from "react";
-import { BrandingProvider } from "../contexts/Branding";
-import CredentialCard from "./CredentialCard";
-import CredentialDetail from "./CredentialDetail";
-import OverlayBrandingForm from "./OverlayBrandingForm";
-import { OverlayBundle } from "@hyperledger/aries-oca";
-
+import { BrandingProvider } from "@/app/contexts/Branding";
+import CredentialCard from "@/app/components/CredentialCard";
+import CredentialDetail from "@/app/components/CredentialDetail";
+import OverlayBrandingForm from "@/app/components/BrandingOverlayForm";
+import { IOverlayBundleData, OverlayBundle } from "@hyperledger/aries-oca";
 import { Info } from "@mui/icons-material";
 import { CredentialExchangeRecord } from "@aries-framework/core";
 
-function OverlayForm({
+export default function OverlaBundleView({
   overlay,
-  record,
+  record
 }: {
   overlay: OverlayBundle;
-  record?: CredentialExchangeRecord;
+  record: CredentialExchangeRecord
 }) {
   const [language, setLanguage] = useState<string>("");
 
@@ -34,12 +35,9 @@ function OverlayForm({
     setLanguage(overlay.languages[0]);
   }, [overlay?.languages]);
 
-  const handleChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setLanguage((event.target as HTMLInputElement).value);
-    },
-    []
-  );
+  const handleChange = useCallback((value: string) => {
+    setLanguage(value);
+  }, []);
 
   return (
     <BrandingProvider>
@@ -51,7 +49,7 @@ function OverlayForm({
               <RadioGroup
                 aria-labelledby="overlay-bundle-language-label"
                 name="language"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e.target.value)}
                 value={language}
                 row
               >
@@ -144,6 +142,4 @@ function OverlayForm({
       </Grid>
     </BrandingProvider>
   );
-}
-
-export default OverlayForm;
+};
