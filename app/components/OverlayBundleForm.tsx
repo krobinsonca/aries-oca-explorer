@@ -11,14 +11,14 @@ import {
 import { useRouter } from "next/navigation";
 import { BUNDLE_LIST_URL } from "@/app/lib/data";
 
-export default function OverlayBundleForm({ options }: { options: any }) {
+export default function OverlayBundleForm({ options }: { options: any[] }) {
   const [option, setOption] = useState<any | undefined>(undefined);
 
   const { push } = useRouter();
   const handleSelect = (value: string) => {
     const option = JSON.parse(value);
     setOption(option);
-    push(`/schema/${option.id}`);
+    push(`/schema/${encodeURIComponent(option.id)}`);
   };
 
   return (
