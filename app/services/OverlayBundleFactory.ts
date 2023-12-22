@@ -3,12 +3,18 @@ import { IOverlayBundleData } from "@hyperledger/aries-oca/build/interfaces/data
 import { parse } from "csv-parse/browser/esm/sync";
 
 class OverlayBundleFactory {
+  public static async fetchRawOverlayBundle(
+    url: string,
+  ): Promise<IOverlayBundleData[]> {
+    const response = await fetch(url);
+    return await response.json();
+  }
+
   public static async fetchOverlayBundle(
     credentialDefinitionId: string,
     url: string
   ): Promise<OverlayBundle> {
-    const response = await fetch(url);
-    const data: IOverlayBundleData[] = await response.json();
+    const data = await this.fetchRawOverlayBundle(url);
     return this.createOverlayBundle(credentialDefinitionId, data[0]);
   }
 

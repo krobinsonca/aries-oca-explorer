@@ -1,3 +1,5 @@
+'use client';
+
 import React from "react";
 import {
   Card,
@@ -8,54 +10,68 @@ import {
   Radio,
   RadioGroup,
   Tooltip,
-  Typography,
+  Typography
 } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2/Grid2";
 import { useCallback, useEffect, useState } from "react";
-import { BrandingProvider } from "../contexts/Branding";
-import CredentialCard from "./CredentialCard";
-import CredentialDetail from "./CredentialDetail";
-import OverlayBrandingForm from "./OverlayBrandingForm";
+import { BrandingProvider } from "@/app/contexts/Branding";
+import CredentialCard from "@/app/components/CredentialCard";
+import CredentialDetail from "@/app/components/CredentialDetail";
+import OverlayBrandingForm from "@/app/components/BrandingOverlayForm";
 import { OverlayBundle } from "@hyperledger/aries-oca";
-
 import { Info } from "@mui/icons-material";
-import { CredentialExchangeRecord } from "@aries-framework/core";
+import { CredentialExchangeRecord, CredentialPreviewAttribute, CredentialState } from "@aries-framework/core";
+import { fetchOverlayBundleData } from "@/app/lib/data";
 
-function OverlayForm({
-  overlay,
-  record,
-}: {
-  overlay: OverlayBundle;
-  record?: CredentialExchangeRecord;
-}) {
+export default function OverlaBundleView({ option }: { option: any }) {
+  const [overlayData, setOverlayData] = useState<{
+    overlay: OverlayBundle | undefined;
+    record: CredentialExchangeRecord | undefined;
+  }>({ overlay: undefined, record: undefined });
   const [language, setLanguage] = useState<string>("");
 
   useEffect(() => {
-    setLanguage(overlay.languages[0]);
-  }, [overlay?.languages]);
+    async function fetchData() {
+      const { overlay, data } = await fetchOverlayBundleData(option);
+      const record = new CredentialExchangeRecord({
+        threadId: "123",
+        protocolVersion: "1.0",
+        state: CredentialState.OfferReceived,
+        credentialAttributes: Object.entries(data).map(
+          ([name, value]) => new CredentialPreviewAttribute({ name, value })
+        ),
+      });
+      setOverlayData({ overlay, record });
+    }
 
-  const handleChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setLanguage((event.target as HTMLInputElement).value);
-    },
-    []
-  );
+    fetchData();
+  }, [option]);
+
+
+  useEffect(() => {
+    if (!overlayData?.overlay) return;
+    setLanguage(overlayData?.overlay.languages[0]);
+  }, [overlayData?.overlay]);
+
+  const handleChange = useCallback((value: string) => {
+    setLanguage(value);
+  }, []);
 
   return (
-    <BrandingProvider>
+    overlayData?.overlay && overlayData?.record && <BrandingProvider>
       <Grid>
-        {overlay.languages.length > 1 && (
+        {overlayData?.overlay.languages.length > 1 && (
           <Grid id="overlay-bundle-language-select">
             <FormControl fullWidth margin="dense">
               <FormLabel>Language</FormLabel>
               <RadioGroup
                 aria-labelledby="overlay-bundle-language-label"
                 name="language"
-                onChange={handleChange}
+                onChange={(e) => handleChange(e.target.value)}
                 value={language}
                 row
               >
-                {overlay.languages.map((language) => (
+                {overlayData?.overlay.languages.map((language) => (
                   <FormControlLabel
                     key={language}
                     value={language}
@@ -71,11 +87,11 @@ function OverlayForm({
           <Card>
             <CardContent>
               <Typography variant="overline">
-                {overlay.metadata.name[language]}&nbsp;
-                {overlay.metadata?.credentialHelpText && (
+                {overlayData?.overlay.metadata.name[language]}&nbsp;
+                {overlayData?.overlay.metadata?.credentialHelpText && (
                   <Tooltip
                     title={
-                      overlay.metadata?.credentialHelpText?.[language] ?? ""
+                      overlayData?.overlay.metadata?.credentialHelpText?.[language] ?? ""
                     }
                   >
                     <Info fontSize="small" style={{ marginBottom: 2 }} />
@@ -83,15 +99,15 @@ function OverlayForm({
                 )}
               </Typography>
               <Typography variant="body1" gutterBottom>
-                {overlay.metadata.description[language]}
+                {overlayData?.overlay.metadata.description[language]}
               </Typography>
-              {overlay.metadata?.issuer && (
+              {overlayData?.overlay.metadata?.issuer && (
                 <Typography variant="body2" color="text.secondary">
-                  {overlay.metadata?.issuer?.[language]}&nbsp;
-                  {overlay.metadata?.issuerDescription && (
+                  {overlayData?.overlay.metadata?.issuer?.[language]}&nbsp;
+                  {overlayData?.overlay.metadata?.issuerDescription && (
                     <Tooltip
                       title={
-                        overlay.metadata?.issuerDescription?.[language] ?? ""
+                        overlayData?.overlay.metadata?.issuerDescription?.[language] ?? ""
                       }
                     >
                       <Info fontSize="inherit" style={{ marginBottom: 2 }} />
@@ -117,8 +133,8 @@ function OverlayForm({
           >
             <div id="overlay-bundle-credential-card">
               <CredentialCard
-                overlay={overlay}
-                record={record}
+                overlay={overlayData?.overlay}
+                record={overlayData?.record}
                 language={language}
               />
             </div>
@@ -131,19 +147,17 @@ function OverlayForm({
           >
             <div id="overlay-bundle-credential-details">
               <CredentialDetail
-                overlay={overlay}
-                record={record}
+                overlay={overlayData?.overlay}
+                record={overlayData?.record}
                 language={language}
               />
             </div>
           </Grid>
         </Grid>
         <Grid>
-          <OverlayBrandingForm overlay={overlay} language={language} />
+          <OverlayBrandingForm overlay={overlayData?.overlay} language={language} />
         </Grid>
       </Grid>
     </BrandingProvider>
   );
-}
-
-export default OverlayForm;
+};
