@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 
 export async function generateStaticParams() {
   const options: any[] = await fetchOverlayBundleList();
-  return options.map((option) => ({ id: option.id }));
+  return options.map((option) =>
+    ({ id: process.env.NODE_ENV === 'development' ? encodeURIComponent(option.id) : option.id }));
 }
 
 export default async function Page({ params }: { params: { id: string } }) {

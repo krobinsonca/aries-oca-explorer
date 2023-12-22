@@ -18,7 +18,7 @@ export default function OverlayBundleForm({ options }: { options: any[] }) {
   const handleSelect = (value: string) => {
     const option = JSON.parse(value);
     setOption(option);
-    push(`/schema/${encodeURIComponent(option.id)}`);
+    push(`/identifier/${encodeURIComponent(option.id)}`);
   };
 
   return (
