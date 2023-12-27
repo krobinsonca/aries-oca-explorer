@@ -21,9 +21,11 @@ import ImageField from "./ImageField";
 
 export default function BrandingOverlayForm({
   overlay,
+  readonly = false
 }: {
   overlay?: OverlayBundle;
   language?: string;
+  readonly: boolean;
 }) {
   const branding = useBranding();
   const dispatch = useBrandingDispatch();
@@ -47,7 +49,7 @@ export default function BrandingOverlayForm({
   }, [overlay, dispatch]);
 
   return (
-    <div id="overlay-bundle-branding-form">
+    readonly || <div id="overlay-bundle-branding-form">
       <div id="overlay-bundle-branding-form-fields">
         <ImageField
           id="logo"

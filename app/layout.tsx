@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import './globals.css';
-import Header from '@/app/components/Header';
+import '@/app/globals.css';
 import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import { theme } from '@/app/theme';
@@ -24,10 +23,7 @@ export default function RootLayout({
         <StyledEngineProvider injectFirst>
           <CssBaseline />
           <ThemeProvider theme={theme}>
-            <Header />
-            <main className='app min-h-screen'>
-              {children}
-            </main>
+            {children}
           </ThemeProvider>
         </StyledEngineProvider>
       </body>
