@@ -23,7 +23,15 @@ import { Info } from "@mui/icons-material";
 import { CredentialExchangeRecord, CredentialPreviewAttribute, CredentialState } from "@aries-framework/core";
 import { fetchOverlayBundleData } from "@/app/lib/data";
 
-export default function OverlaBundleView({ option }: { option: any }) {
+export default function OverlaBundleView(
+  {
+    option,
+    readonly = false
+  }: {
+    option: any,
+    readonly: boolean
+  }
+) {
   const [overlayData, setOverlayData] = useState<{
     overlay: OverlayBundle | undefined;
     record: CredentialExchangeRecord | undefined;
@@ -155,7 +163,7 @@ export default function OverlaBundleView({ option }: { option: any }) {
           </Grid>
         </Grid>
         <Grid>
-          <OverlayBrandingForm overlay={overlayData?.overlay} language={language} />
+          <OverlayBrandingForm overlay={overlayData?.overlay} language={language} readonly={readonly} />
         </Grid>
       </Grid>
     </BrandingProvider>
