@@ -1,4 +1,3 @@
-import { KeyboardReturnOutlined } from "@mui/icons-material";
 import OverlayBundleFactory from "@/app/services/OverlayBundleFactory";
 
 export const BUNDLE_LIST_URL = "https://raw.githubusercontent.com/bcgov/aries-oca-bundles/main";
@@ -6,9 +5,7 @@ export const BUNDLE_LIST_PATH = "/ocabundleslist.json";
 
 export async function fetchOverlayBundleList() {
   try {
-    const response = await fetch(BUNDLE_LIST_URL + BUNDLE_LIST_PATH, {
-      headers: { "Content-Type": "text/plain" }
-    });
+    const response = await fetch(BUNDLE_LIST_URL + BUNDLE_LIST_PATH);
 
     const body = await response.text();
     body.replaceAll("\n", "");
