@@ -15,7 +15,10 @@ export async function fetchOverlayBundleList() {
     body.replace(/,\]$/, "]");
 
     const options = JSON.parse(body);
-    return options;
+    return Object.entries(options.reduce((opts: any, option: any) => {
+      opts[option.ocabundle] = option;
+      return opts;
+    }, {})).map(entry => entry[1]);
   } catch (error) {
     console.error(error);
     throw new Error('Failed to fetch Overlay Bundle List.');

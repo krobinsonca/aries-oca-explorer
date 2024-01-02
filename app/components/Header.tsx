@@ -1,12 +1,18 @@
+'use client';
+
 import React from "react";
 import { AppBar, Toolbar } from "@mui/material";
 // import { Info } from "@mui/icons-material";
 import imgUrl from "../assets/images/BCID_H_rgb_rev.svg";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 
 export default function Header() {
+  const searchParams = useSearchParams();
+  const readonly = searchParams.get('view') === 'readonly';
+
   return (
-    <header style={{ paddingBottom: "10px" }}>
+    readonly || <header style={{ paddingBottom: "10px" }}>
       <AppBar
         position="static"
         sx={{

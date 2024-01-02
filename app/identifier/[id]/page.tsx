@@ -9,18 +9,8 @@ export async function generateStaticParams() {
     ({ id: process.env.NODE_ENV === 'development' ? encodeURIComponent(option.id) : option.id }));
 }
 
-export default async function Page(
-  {
-    params,
-    searchParams
-  }: {
-    params: { id: string },
-    searchParams: URLSearchParams
-  }
-) {
+export default async function Page({ params }: { params: { id: string } }) {
   const id = decodeURIComponent(params.id);
-  const search = new URLSearchParams(searchParams);
-  const readonly = search.get('view') === 'readonly';
   const options: any[] = await fetchOverlayBundleList();
   const option = options.find((option) => option.id === id);
 
@@ -29,11 +19,6 @@ export default async function Page(
   }
 
   return (
-    <>
-      {readonly || <Header />}
-      <main className='app min-h-screen'>
-        <OverlayBundleView option={option} readonly={readonly} />
-      </main>
-    </>
+    <OverlayBundleView option={option} />
   );
 }
