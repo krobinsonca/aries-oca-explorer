@@ -6,7 +6,8 @@ import {
   InputLabel,
   MenuItem,
   Paper,
-  Select
+  Select,
+  Typography
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { BUNDLE_LIST_URL } from "@/app/lib/data";
@@ -45,7 +46,10 @@ export default function OverlayBundleForm({ options }: { options: any[] }) {
                 url: BUNDLE_LIST_URL + "/" + ocabundle
               })}
             >
-              {name}
+              <div>
+                <Typography variant="body1">{name}</Typography>
+                <Typography variant="body2">{ocabundle}</Typography>
+              </div>
             </MenuItem>
           ))}
         </Select>

@@ -4,6 +4,7 @@ import '@/app/globals.css';
 import { StyledEngineProvider, ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import { theme } from '@/app/theme';
+import Header from '@/app/components/Header';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -23,7 +24,10 @@ export default function RootLayout({
         <StyledEngineProvider injectFirst>
           <CssBaseline />
           <ThemeProvider theme={theme}>
-            {children}
+            <Header />
+            <main className='app min-h-screen'>
+              {children}
+            </main>
           </ThemeProvider>
         </StyledEngineProvider>
       </body>

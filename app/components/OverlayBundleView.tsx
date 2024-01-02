@@ -22,16 +22,12 @@ import { OverlayBundle } from "@hyperledger/aries-oca";
 import { Info } from "@mui/icons-material";
 import { CredentialExchangeRecord, CredentialPreviewAttribute, CredentialState } from "@aries-framework/core";
 import { fetchOverlayBundleData } from "@/app/lib/data";
+import { useSearchParams } from "next/navigation";
 
-export default function OverlaBundleView(
-  {
-    option,
-    readonly = false
-  }: {
-    option: any,
-    readonly: boolean
-  }
-) {
+export default function OverlaBundleView({ option }: { option: any }) {
+  const searchParams = useSearchParams();
+  const readonly = searchParams.get('view') === 'readonly';
+
   const [overlayData, setOverlayData] = useState<{
     overlay: OverlayBundle | undefined;
     record: CredentialExchangeRecord | undefined;
