@@ -40,7 +40,7 @@ function AttributeValue({
         const date = new Date(year, month - 1, day);
         return <Text style={styles}>{date.toDateString()}</Text>;
       }
-      return null;
+      return <Text style={styles}>{attribute.value || "•".repeat(10)}</Text>;
     default:
       return <Text style={styles}>{attribute.value || "•".repeat(10)}</Text>;
   }
