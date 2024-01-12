@@ -189,9 +189,13 @@ function DetailPrimaryBody({
 function Detail({
   credential,
   styles,
+  overlay,
+  language
 }: {
   credential?: LocalizedCredential;
   styles?: Record<string, CSSProperties>;
+  overlay?: OverlayBundle;
+  language?: string;
 }) {
   return (
     <View>
@@ -201,7 +205,7 @@ function Detail({
         <DetailPrimaryBody credential={credential} styles={styles} />
       </View>
       <View>
-        <DetailList credential={credential} styles={styles} />
+        <DetailList credential={credential} styles={styles} overlay={overlay} language={language} />
       </View>
     </View>
   );
@@ -210,14 +214,19 @@ function Detail({
 function DetailList({
   credential,
   styles,
+  overlay,
+  language
 }: {
   credential?: LocalizedCredential;
   styles?: Record<string, CSSProperties>;
+  overlay?: OverlayBundle;
+  language?: string;
 }) {
   return (
     <FlatList
       data={credential?.attributes ?? []}
       renderItem={({ item: attribute }: { item: DisplayAttribute }) => {
+        const overlayAttribute = getOverlayAttribute(attribute.name, overlay, credential, language) ?? attribute;
         return (
           <View
             style={{
@@ -226,7 +235,7 @@ function DetailList({
             }}
           >
             <AttributeLabel
-              attribute={attribute}
+              attribute={overlayAttribute}
               styles={[
                 styles?.normal ?? {},
                 styles?.listText ?? {},
@@ -234,7 +243,7 @@ function DetailList({
               ]}
             />
             <AttributeValue
-              attribute={attribute}
+              attribute={overlayAttribute}
               styles={[
                 styles?.normal ?? {},
                 styles?.listText ?? {},
@@ -274,9 +283,32 @@ function CredentialDetail10({
 
   return (
     <View style={{ width }}>
-      <Detail credential={localizedCredential} styles={styles} />
+      <Detail credential={localizedCredential} styles={styles} overlay={overlay} language={language} />
     </View>
   );
+}
+
+function getOverlayAttribute(
+  name: string,
+  overlay: OverlayBundle | undefined,
+  credential: LocalizedCredential | undefined,
+  language: string | undefined
+): DisplayAttribute | undefined {
+  const attribute = credential?.getAttribute(name);
+  const overlayOptions = overlay?.getAttribute(name);
+
+  if (overlayOptions) {
+    const name = attribute?.name ?? "";
+    const mimeType = attribute?.mimeType ?? "";
+    const value = attribute?.value ?? "";
+    return new DisplayAttribute(
+      { name, mimeType, value },
+      overlayOptions,
+      language ?? "en"
+    );
+  }
+
+  return;
 }
 
 export default CredentialDetail10;
