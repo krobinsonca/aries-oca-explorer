@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { BUNDLE_LIST_URL } from "@/app/lib/data";
+import { FolderOpen } from "@mui/icons-material";
 
 export default function OverlayBundleForm({ options }: { options: any[] }) {
   const [option, setOption] = useState<any | undefined>(undefined);
@@ -48,7 +49,9 @@ export default function OverlayBundleForm({ options }: { options: any[] }) {
             >
               <div>
                 <Typography variant="body1">{name}</Typography>
-                <Typography variant="body2">{ocabundle}</Typography>
+                <Typography variant="caption">({id.replaceAll("~", " ")})</Typography>
+                <br />
+                <Typography variant="caption">PATH: {ocabundle}</Typography>
               </div>
             </MenuItem>
           ))}

@@ -1,21 +1,16 @@
 import OverlayBundleFactory from "@/app/services/OverlayBundleFactory";
 
-export const BUNDLE_LIST_URL = "https://raw.githubusercontent.com/bcgov/aries-oca-bundles/main";
-export const BUNDLE_LIST_PATH = "/ocabundleslist.json";
+export const BUNDLE_LIST_URL = "https://bcgov.github.io/aries-oca-bundles";
+export const BUNDLE_LIST_FILE = "ocabundleslist.json";
 
 export async function fetchOverlayBundleList() {
   try {
-    const response = await fetch(BUNDLE_LIST_URL + BUNDLE_LIST_PATH);
+    const response = await fetch(BUNDLE_LIST_URL + "/" + BUNDLE_LIST_FILE);
 
     const body = await response.text();
-    body.replaceAll("\n", "");
-    body.replace(/,\]$/, "]");
 
-    const options = JSON.parse(body);
-    return Object.entries(options.reduce((opts: any, option: any) => {
-      opts[option.ocabundle] = option;
-      return opts;
-    }, {})).map(entry => entry[1]);
+    const options: any[] = JSON.parse(body);
+    return options;
   } catch (error) {
     console.error(error);
     throw new Error('Failed to fetch Overlay Bundle List.');
