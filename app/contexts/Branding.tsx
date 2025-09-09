@@ -36,6 +36,7 @@ export interface BrandingState {
   secondaryAttribute: string;
   issuedDateAttribute?: string;
   expiryDateAttribute?: string;
+  watermarkText?: string;
 }
 
 const initialState: BrandingState = {
@@ -51,6 +52,7 @@ const initialState: BrandingState = {
   secondaryAttribute: "",
   issuedDateAttribute: undefined,
   expiryDateAttribute: undefined,
+  watermarkText: undefined,
 };
 
 const BrandingContext = createContext<BrandingState | null>(null);
