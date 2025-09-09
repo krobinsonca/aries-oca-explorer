@@ -21,8 +21,43 @@ const baseTheme: ThemeOptions = {
     tonalOffset: 0.1,
   },
   typography: {
+    fontFamily: '"BC Sans", "Noto Sans", "Verdana", "Arial", sans-serif',
     button: {
       textTransform: "none",
+    },
+    h1: {
+      fontFamily: '"BC Sans", "Noto Sans", "Verdana", "Arial", sans-serif',
+      fontWeight: 700,
+    },
+    h2: {
+      fontFamily: '"BC Sans", "Noto Sans", "Verdana", "Arial", sans-serif',
+      fontWeight: 700,
+    },
+    h3: {
+      fontFamily: '"BC Sans", "Noto Sans", "Verdana", "Arial", sans-serif',
+      fontWeight: 600,
+    },
+    h4: {
+      fontFamily: '"BC Sans", "Noto Sans", "Verdana", "Arial", sans-serif',
+      fontWeight: 600,
+    },
+    h5: {
+      fontFamily: '"BC Sans", "Noto Sans", "Verdana", "Arial", sans-serif',
+      fontWeight: 500,
+    },
+    h6: {
+      fontFamily: '"BC Sans", "Noto Sans", "Verdana", "Arial", sans-serif',
+      fontWeight: 500,
+    },
+    body1: {
+      fontFamily: '"BC Sans", "Noto Sans", "Verdana", "Arial", sans-serif',
+      fontSize: '1rem',
+      lineHeight: 1.6,
+    },
+    body2: {
+      fontFamily: '"BC Sans", "Noto Sans", "Verdana", "Arial", sans-serif',
+      fontSize: '0.875rem',
+      lineHeight: 1.6,
     },
   },
   breakpoints: {
@@ -55,8 +90,8 @@ export const lightTheme = createTheme({
       paper: '#ffffff',
     },
     text: {
-      primary: '#333333',
-      secondary: '#666666',
+      primary: '#1a1a1a', // Improved contrast ratio
+      secondary: '#4a4a4a', // Improved contrast ratio
     },
   },
 });
@@ -72,7 +107,7 @@ export const darkTheme = createTheme({
     },
     text: {
       primary: '#ffffff',
-      secondary: '#b3b3b3',
+      secondary: '#e0e0e0', // Improved contrast ratio
     },
   },
 });

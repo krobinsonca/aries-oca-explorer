@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { OverlayBundle } from '@hyperledger/aries-oca';
-import { CredentialExchangeRecord } from '@aries-framework/core';
+import { CredentialExchangeRecord, CredentialPreviewAttribute, CredentialState } from '@aries-framework/core';
 import { fetchOverlayBundleData } from '@/app/lib/data';
 import CredentialCard from './CredentialCard';
 import { BundleWithLedger } from '@/app/lib/data';
-import { useBrandingDispatch, ActionType } from '@/app/contexts/Branding';
+import { BrandingProvider, useBrandingDispatch, ActionType } from '@/app/contexts/Branding';
 
 interface SimpleCredentialCardProps {
   bundle: BundleWithLedger;
@@ -15,84 +15,168 @@ interface SimpleCredentialCardProps {
   language?: string;
 }
 
-// Helper function to create a mock credential record from overlay data
-function createMockCredentialRecord(overlay: OverlayBundle, bundle: BundleWithLedger): any {
-  // Create mock attributes based on the overlay's capture base
-  const mockAttributes: Record<string, string> = {};
-  
-  if (overlay.captureBase?.attributes && Array.isArray(overlay.captureBase.attributes)) {
-    overlay.captureBase.attributes.forEach((attr: any) => {
-      // Use placeholder values for demo purposes
-      mockAttributes[attr.name] = `Sample ${attr.name}`;
-    });
+// Helper function to create a credential record from overlay data
+function createCredentialRecord(
+  overlay: OverlayBundle,
+  bundle: BundleWithLedger,
+  data?: Record<string, string>
+): CredentialExchangeRecord {
+  // Prefer real test data when available
+  let attributes: Record<string, string> = data || {};
+
+  // If no test data, derive placeholder attributes from captureBase (handles array or object)
+  if (Object.keys(attributes).length === 0 && (overlay as any)?.captureBase?.attributes) {
+    const cap = (overlay as any).captureBase.attributes;
+    if (Array.isArray(cap)) {
+      cap.forEach((attr: any) => {
+        if (attr?.name) attributes[attr.name] = `........`;
+      });
+    } else if (typeof cap === 'object') {
+      Object.keys(cap).forEach((name) => {
+        attributes[name] = `........`;
+      });
+    }
   }
 
-  // Create a minimal mock credential record
-  const mockRecord = {
-    id: `mock-${bundle.id}`,
-    type: 'CredentialExchangeRecord' as const,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    state: 'credential-issued' as const,
-    connectionId: 'mock-connection',
-    threadId: `mock-thread-${bundle.id}`,
-    protocolVersion: 'v2',
-    credentials: [{
-      credentialRecordType: 'indy',
-      credentialRecordId: `mock-cred-${bundle.id}`,
-    }],
-    credentialAttributes: Object.entries(mockAttributes).map(([name, value]) => ({
-      name,
-      value,
-      mimeType: 'text/plain',
-    })),
-    // Add other required fields with mock values
-    autoAcceptCredential: 'never',
-    errorMessage: undefined,
-    revocationNotification: undefined,
-    tags: {},
-    metadata: {},
-  };
+  // As a last resort, ensure there is at least one attribute so the formatter initializes
+  if (Object.keys(attributes).length === 0) {
+    attributes = { placeholder: 'sample' };
+  }
 
-  return mockRecord;
+  return new CredentialExchangeRecord({
+    threadId: `simple-${bundle.id}`,
+    protocolVersion: "1.0",
+    state: CredentialState.OfferReceived,
+    credentialAttributes: Object.entries(attributes).map(
+      ([name, value]) => new CredentialPreviewAttribute({ name, value })
+    ),
+  });
 }
 
-export default function SimpleCredentialCard({ bundle, onClick, language = 'en' }: SimpleCredentialCardProps) {
+// Component that handles branding for individual cards
+function BrandingInitializer({ overlay, watermarkText, bundle }: {
+  overlay: OverlayBundle | null;
+  watermarkText: string | undefined;
+  bundle: BundleWithLedger;
+}) {
+  const brandingDispatch = useBrandingDispatch();
+
+  useEffect(() => {
+    if (!brandingDispatch || !overlay?.branding) return;
+
+    const extractWatermarkText = (ov: any): string | Record<string, string> | undefined => {
+      const cands: any[] = [
+        ov?.branding?.watermarkText,
+        ov?.branding?.watermark,
+        ov?.metadata?.watermarkText,
+        ov?.metadata?.watermark?.text,
+        ov?.metadata?.watermark,
+        ov?.watermark,
+      ];
+
+      for (const cand of cands) {
+        if (cand === undefined || cand === null) continue;
+        if (typeof cand === 'string') {
+          if (cand.trim()) {
+            return cand;
+          } else {
+            continue;
+          }
+        }
+        if (Array.isArray(cand) && cand.length && cand.every(x => typeof x === 'string')) {
+          const result = (cand as string[]).join(' ');
+          if (result.trim()) {
+            return result;
+          } else {
+            continue;
+          }
+        }
+        if (typeof cand === 'object' && cand !== null) {
+          // Check if it's a localized object like { "en": "text", "fr": "texte" }
+          const entries = Object.entries(cand as Record<string, unknown>);
+          const validEntries = entries.filter(([key, value]) =>
+            typeof value === 'string' && (value as string).trim()
+          );
+
+          if (validEntries.length > 0) {
+            // Return the full object to preserve language-specific watermarks
+            const result: Record<string, string> = {};
+            validEntries.forEach(([key, value]) => {
+              result[key] = value as string;
+            });
+            return result;
+          }
+
+          // Check for nested text property
+          if (typeof (cand as any).text === 'string') {
+            if ((cand as any).text.trim()) {
+              return (cand as any).text;
+            } else {
+              continue;
+            }
+          }
+        }
+      }
+
+      return undefined;
+    };
+
+    const extractedWatermark = extractWatermarkText(overlay);
+    const resolvedWatermark = watermarkText || extractedWatermark;
+
+    const finalWatermark = (typeof resolvedWatermark === 'string' && resolvedWatermark.trim()) ||
+                          (typeof resolvedWatermark === 'object' && resolvedWatermark !== null && Object.values(resolvedWatermark).some(v => typeof v === 'string' && v.trim()))
+                          ? resolvedWatermark
+                          : undefined;
+
+    brandingDispatch({
+      type: ActionType.SET_BRANDING,
+      payload: {
+        logo: overlay.branding.logo ?? "",
+        backgroundImage: overlay.branding.backgroundImage ?? "",
+        backgroundImageSlice: overlay.branding.backgroundImageSlice ?? "",
+        primaryBackgroundColor: overlay.branding.primaryBackgroundColor ?? "",
+        secondaryBackgroundColor: overlay.branding.secondaryBackgroundColor ?? "",
+        primaryAttribute: overlay.branding.primaryAttribute ?? "",
+        secondaryAttribute: overlay.branding.secondaryAttribute ?? "",
+        watermarkText: finalWatermark,
+      }
+    });
+  }, [overlay, watermarkText, bundle.id, brandingDispatch]);
+
+  return null;
+}
+
+function SimpleCredentialCardContent({ bundle, onClick, language = 'en' }: SimpleCredentialCardProps) {
   const [overlay, setOverlay] = useState<OverlayBundle | null>(null);
   const [mockRecord, setMockRecord] = useState<CredentialExchangeRecord | null>(null);
+  const [watermarkText, setWatermarkText] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const brandingDispatch = useBrandingDispatch();
 
   useEffect(() => {
     let isMounted = true;
 
     const loadOverlay = async () => {
       try {
-        console.log('Loading overlay for bundle:', bundle.id);
         setIsLoading(true);
         setError(null);
 
         const result = await fetchOverlayBundleData(bundle, { includeTestData: false });
-        console.log('Fetch result:', result);
         
         if (!isMounted) return;
 
         if (result && result.overlay) {
-          console.log('Setting overlay:', result.overlay);
-          console.log('SimpleCredentialCard - Overlay branding:', result.overlay?.branding);
-          console.log('SimpleCredentialCard - Overlay overlays:', result.overlay?.overlays);
           setOverlay(result.overlay);
-          // Create mock credential record for rendering
-          const mock = createMockCredentialRecord(result.overlay, bundle);
-          setMockRecord(mock);
+          setWatermarkText(result.watermarkText);
+          // Create credential record for rendering
+          const record = createCredentialRecord(result.overlay, bundle, result.data);
+          setMockRecord(record);
         } else {
-          console.log('No overlay in result');
           setError('No overlay data');
         }
       } catch (err) {
         if (!isMounted) return;
-        console.error('Error loading overlay:', err);
         setError(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
       } finally {
         if (isMounted) {
@@ -108,65 +192,7 @@ export default function SimpleCredentialCard({ bundle, onClick, language = 'en' 
     };
   }, [bundle.id]);
 
-  // Initialize branding when overlay is loaded
-  useEffect(() => {
-    if (!brandingDispatch || !overlay) {
-      console.log('SimpleCredentialCard - No branding dispatch or overlay:', { brandingDispatch: !!brandingDispatch, overlay: !!overlay });
-      return;
-    }
-
-    console.log('SimpleCredentialCard - Initializing branding with overlay:', overlay);
-    console.log('SimpleCredentialCard - Overlay has branding:', !!overlay?.branding);
-
-    const extractWatermarkText = (ov: any): string => {
-      const cands: any[] = [
-        ov?.branding?.watermarkText,
-        ov?.branding?.watermark,
-        ov?.branding?.water_mark,
-        ov?.metadata?.watermarkText,
-        ov?.metadata?.watermark?.text,
-        ov?.metadata?.watermark,
-        ov?.watermarkText,
-        ov?.watermark?.text,
-        ov?.watermark,
-      ];
-      for (const cand of cands) {
-        if (cand === undefined || cand === null) continue;
-        if (typeof cand === 'string' && cand.trim()) return cand;
-        if (Array.isArray(cand) && cand.length && cand.every(x => typeof x === 'string')) {
-          return (cand as string[]).join(' ');
-        }
-        if (typeof cand === 'object') {
-          if (typeof (cand as any).text === 'string' && (cand as any).text.trim()) return (cand as any).text;
-          const values = Object.values(cand as Record<string, unknown>);
-          const first = values.find(v => typeof v === 'string' && (v as string).trim());
-          if (typeof first === 'string') return first as string;
-        }
-      }
-      return '';
-    };
-
-    const resolvedWatermark = extractWatermarkText(overlay);
-
-    // Use overlay branding if available, otherwise use defaults
-    const brandingPayload = {
-      logo: overlay.branding?.logo ?? "",
-      backgroundImage: overlay.branding?.backgroundImage ?? "",
-      backgroundImageSlice: overlay.branding?.backgroundImageSlice ?? "",
-      primaryBackgroundColor: overlay.branding?.primaryBackgroundColor ?? "#003366",
-      secondaryBackgroundColor: overlay.branding?.secondaryBackgroundColor ?? "#003366",
-      primaryAttribute: overlay.branding?.primaryAttribute ?? "",
-      secondaryAttribute: overlay.branding?.secondaryAttribute ?? "",
-      watermarkText: resolvedWatermark,
-    };
-
-    console.log('SimpleCredentialCard - Setting branding payload:', brandingPayload);
-
-    brandingDispatch({
-      type: ActionType.SET_BRANDING,
-      payload: brandingPayload
-    });
-  }, [brandingDispatch, overlay]);
+  // Branding is now handled by BrandingInitializer component
 
   if (isLoading) {
     return (
@@ -192,59 +218,70 @@ export default function SimpleCredentialCard({ bundle, onClick, language = 'en' 
     );
   }
 
-  if (error || !overlay || !mockRecord) {
-    return (
-      <Box
-        display="flex"
-        flexDirection="column"
-        justifyContent="center"
-        alignItems="center"
-        minHeight={200}
-        sx={{
-          border: 1,
-          borderColor: 'error.main',
-          borderRadius: 1,
-          backgroundColor: 'error.light',
-          color: 'error.contrastText',
-          cursor: 'pointer',
-          p: 2,
-          '&:hover': {
-            backgroundColor: 'error.dark'
-          }
-        }}
-        onClick={onClick}
-      >
-        <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-          {bundle.name || bundle.id}
-        </Typography>
-        <Typography variant="caption">
-          {error || 'No overlay data'}
-        </Typography>
-        {bundle.ledgerDisplayName && (
-          <Typography variant="caption" sx={{ mt: 1, opacity: 0.8 }}>
-            {bundle.ledgerDisplayName}
-          </Typography>
-        )}
-      </Box>
-    );
-  }
-
   return (
     <Box
       sx={{
         cursor: 'pointer',
+        display: 'inline-block',
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
           transform: 'translateY(-2px)',
-          boxShadow: 4
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
         }
       }}
       onClick={onClick}
     >
-      <Typography variant="caption" sx={{ display: 'block', mb: 1, textAlign: 'center' }}>
-        {bundle.name || bundle.id}
-      </Typography>
       <CredentialCard overlay={overlay} record={mockRecord} language={language} />
     </Box>
+  );
+}
+
+function SimpleCredentialCardWithBranding({ bundle, onClick, language = 'en' }: SimpleCredentialCardProps) {
+  const [overlay, setOverlay] = useState<OverlayBundle | null>(null);
+  const [mockRecord, setMockRecord] = useState<CredentialExchangeRecord | null>(null);
+  const [watermarkText, setWatermarkText] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadOverlay = async () => {
+      try {
+        const result = await fetchOverlayBundleData(bundle, { includeTestData: false });
+
+        if (!isMounted) return;
+
+        if (result && result.overlay) {
+          setOverlay(result.overlay);
+          setWatermarkText(result.watermarkText);
+          // Create credential record for rendering
+          const record = createCredentialRecord(result.overlay, bundle, result.data);
+          setMockRecord(record);
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        console.error('Error loading overlay:', err);
+      }
+    };
+
+    loadOverlay();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [bundle.id]);
+
+  return (
+    <>
+      <BrandingInitializer overlay={overlay} watermarkText={watermarkText} bundle={bundle} />
+      <SimpleCredentialCardContent bundle={bundle} onClick={onClick} language={language} />
+    </>
+  );
+}
+
+export default function SimpleCredentialCard({ bundle, onClick, language = 'en' }: SimpleCredentialCardProps) {
+  return (
+    <BrandingProvider>
+      <SimpleCredentialCardWithBranding bundle={bundle} onClick={onClick} language={language} />
+    </BrandingProvider>
   );
 }

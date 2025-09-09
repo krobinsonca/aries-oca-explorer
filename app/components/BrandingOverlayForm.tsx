@@ -123,14 +123,15 @@ export default function BrandingOverlayForm({
             options={Object.entries(overlay?.captureBase?.attributes || {}).map(
               ([key]) => key
             )}
-            value={branding?.primaryAttribute ?? ""}
+            value={branding?.primaryAttribute || null}
             onChange={(_e, value) => {
               dispatch &&
                 dispatch({
                   type: ActionType.PRIMARY_ATTRIBUTE,
-                  payload: { primaryAttribute: value },
+                  payload: { primaryAttribute: value || "" },
                 });
             }}
+            isOptionEqualToValue={(option, value) => option === value}
             renderInput={(params: AutocompleteRenderInputParams) => (
               <TextField
                 {...params}
@@ -147,14 +148,15 @@ export default function BrandingOverlayForm({
             options={Object.entries(overlay?.captureBase?.attributes || {}).map(
               ([key]) => key
             )}
-            value={branding?.secondaryAttribute ?? ""}
+            value={branding?.secondaryAttribute || null}
             onChange={(_e, value) => {
               dispatch &&
                 dispatch({
                   type: ActionType.SECONDARY_ATTRIBUTE,
-                  payload: { secondaryAttribute: value },
+                  payload: { secondaryAttribute: value || "" },
                 });
             }}
+            isOptionEqualToValue={(option, value) => option === value}
             renderInput={(params: AutocompleteRenderInputParams) => (
               <TextField
                 {...params}
@@ -165,6 +167,22 @@ export default function BrandingOverlayForm({
             )}
           />
         </FormControl>
+        <TextField
+          fullWidth
+          id="watermark-text"
+          label="Watermark Text"
+          value={branding?.watermarkText ?? ""}
+          onChange={(e) => {
+            dispatch &&
+              dispatch({
+                type: ActionType.WATERMARK_TEXT,
+                payload: { watermarkText: e.target.value },
+              });
+          }}
+          margin="dense"
+          size="small"
+          placeholder="e.g., NON-PRODUCTION"
+        />
       </div>
       <FormControl margin="dense" size="small">
         <Button

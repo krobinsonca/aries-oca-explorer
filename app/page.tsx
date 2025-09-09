@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Header from '@/app/components/Header';
 import EnhancedCredentialFilter from '@/app/components/EnhancedCredentialFilter';
 import { fetchOverlayBundleList, BundleWithLedger } from '@/app/lib/data';
-import { BrandingProvider } from '@/app/contexts/Branding';
 import { CircularProgress, Box, Typography } from '@mui/material';
 
 export default function Page() {
@@ -46,8 +45,6 @@ export default function Page() {
   }
 
   return (
-    <BrandingProvider>
-      <EnhancedCredentialFilter options={options} />
-    </BrandingProvider>
+    <EnhancedCredentialFilter options={options} />
   );
 }

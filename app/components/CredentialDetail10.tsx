@@ -60,7 +60,7 @@ function computedStyles(branding: any): Record<string, CSSProperties> {
     },
     textContainer: {
       color: textColorForBackground(
-        branding?.primaryBackgroundColor || "rgba(0, 0, 0, 0.24)"
+        branding?.primaryBackgroundColor || "#003366"
       ),
       flexShrink: 1,
     },
@@ -237,7 +237,7 @@ function CredentialDetail10({
             >
               <div
                 style={{
-                  color: 'white',
+                  color: textColorForBackground(branding?.primaryBackgroundColor || '#003366'),
                   fontSize: '14px',
                   fontWeight: '500',
                   lineHeight: 1.3,
@@ -268,7 +268,7 @@ function CredentialDetail10({
             >
               <div
                 style={{
-                  color: 'white',
+                  color: textColorForBackground(branding?.primaryBackgroundColor || '#003366'),
                   fontSize: '20px',
                   fontWeight: '300',
                   lineHeight: 1.2,
@@ -402,40 +402,6 @@ function CredentialDetail10({
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div style={{ padding: 16 }}>
-            <div style={{ marginBottom: 12 }}>
-              <div
-                style={{
-                  color: '#1976d2',
-                  fontSize: 14,
-                  fontWeight: '500',
-                  fontFamily: 'BC Sans, Arial, sans-serif',
-                }}
-              >
-                View JSON Details
-              </div>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}
-            >
-              <div style={{ marginRight: 8, fontSize: 16 }}>🗑️</div>
-              <div
-                style={{
-                  color: '#d32f2f',
-                  fontSize: 14,
-                  fontWeight: '500',
-                  fontFamily: 'BC Sans, Arial, sans-serif',
-                }}
-              >
-                Remove from wallet
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

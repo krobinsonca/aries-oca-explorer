@@ -41,6 +41,10 @@ class OverlayBundleFactory {
 
         if (!response.ok) {
           // File doesn't exist or other error, return empty object silently
+          // Don't log 404 errors as they're expected when test data doesn't exist
+          if (process.env.NODE_ENV === 'development' && response.status !== 404) {
+            console.warn(`Failed to fetch test data from ${testDataUrl}: ${response.status}`);
+          }
           return {};
         }
 
@@ -85,9 +89,6 @@ class OverlayBundleFactory {
 
     } catch (error) {
       // Silently handle any errors - testdata.csv files are optional
-      // Only log unexpected errors that aren't network-related
-      // Silence unexpected network/parse noise in UI; leave for debugging only
-      // console.warn('Unexpected error in fetchOverlayBundleData:', error);
       return {};
     }
   }
