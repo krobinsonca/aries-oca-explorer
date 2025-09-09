@@ -17,6 +17,7 @@ export enum ActionType {
   SECONDARY_ATTRIBUTE = "secondaryAttribute",
   ISSUED_DATE_ATTRIBUTE = "issuedDateAttribute",
   EXPIRY_DATE_ATTRIBUTE = "expiryDateAttribute",
+  WATERMARK_TEXT = "watermarkText",
 }
 
 export enum BrandingVersion {
@@ -36,7 +37,7 @@ export interface BrandingState {
   secondaryAttribute: string;
   issuedDateAttribute?: string;
   expiryDateAttribute?: string;
-  watermarkText?: string;
+  watermarkText?: string | Record<string, string>;
 }
 
 const initialState: BrandingState = {
@@ -91,6 +92,7 @@ export function brandingReducer(
     case ActionType.SECONDARY_BACKGROUND_COLOR:
     case ActionType.PRIMARY_ATTRIBUTE:
     case ActionType.SECONDARY_ATTRIBUTE:
+    case ActionType.WATERMARK_TEXT:
       return {
         ...state,
         ...action.payload,

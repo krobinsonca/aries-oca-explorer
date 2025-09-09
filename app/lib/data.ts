@@ -247,29 +247,69 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
 }
 
 // Helper function to extract watermark text from various object structures
-function extractWatermarkFromObject(obj: any): string | undefined {
-  if (!obj || typeof obj !== 'object') return undefined;
-  
+function extractWatermarkFromObject(obj: any): string | object | undefined {
+  if (!obj || typeof obj !== 'object') {
+    return undefined;
+  }
+
   // Direct watermark fields
   const directFields = ['watermarkText', 'watermark'];
   for (const field of directFields) {
-    if (obj[field]) {
-      if (typeof obj[field] === 'string') return obj[field];
-      if (typeof obj[field] === 'object' && obj[field].text) return obj[field].text;
+    // First check if field exists and is not empty
+    if (obj.hasOwnProperty(field)) {
+      if (typeof obj[field] === 'string') {
+        if (obj[field].trim()) {
+          return obj[field];
+        } else {
+          // Field exists but is empty/whitespace - explicitly return undefined
+          return undefined;
+        }
+      }
+      if (typeof obj[field] === 'object' && obj[field] !== null) {
+        if (obj[field].text && typeof obj[field].text === 'string') {
+          if (obj[field].text.trim()) {
+            return obj[field].text;
+          } else {
+            // Object with empty text field
+            return undefined;
+          }
+        }
+        // Handle localized watermark objects like { "en": "NON-PRODUCTION", "fr": "NON-PRODUCTION (FR)" }
+        if (!obj[field].text) {
+          const values = Object.values(obj[field]);
+          if (values.length > 0 && values.every(v => typeof v === 'string' && v.trim())) {
+            return obj[field]; // Return the full localized object
+          }
+          // Check if it's a localized object with empty values
+          if (values.length > 0 && values.every(v => typeof v === 'string' && !v.trim())) {
+            return undefined;
+          }
+        }
+      }
     }
   }
-  
+
+  // Check for direct watermark field in the overlay (not just nested in branding/metadata)
+  if (obj.watermark && typeof obj.watermark === 'string' && obj.watermark.trim()) {
+    return obj.watermark;
+  }
+
+  // Additional check: if watermark field exists but is empty/whitespace, explicitly return undefined
+  if (obj.hasOwnProperty('watermark') && typeof obj.watermark === 'string' && !obj.watermark.trim()) {
+    return undefined;
+  }
+
   // Check nested structures
   if (obj.branding) {
     const brandingWatermark = extractWatermarkFromObject(obj.branding);
     if (brandingWatermark) return brandingWatermark;
   }
-  
+
   if (obj.metadata) {
     const metadataWatermark = extractWatermarkFromObject(obj.metadata);
     if (metadataWatermark) return metadataWatermark;
   }
-  
+
   return undefined;
 }
 
@@ -282,14 +322,6 @@ export async function fetchOverlayBundleData(option: any, opts?: { includeTestDa
     const overlayPromise = OverlayBundleFactory.fetchOverlayBundle(option.id, option.url);
     const rawOverlayPromise = OverlayBundleFactory.fetchRawOverlayBundle(option.url);
 
-    // Debug logging
-    if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_DEBUG_WATERMARK === '1') {
-      console.debug('[data-layer] Fetching overlay data:', {
-        id: option.id,
-        url: option.url,
-        ocabundle: option.ocabundle
-      });
-    }
 
     const dataPromise = includeTestData 
       ? OverlayBundleFactory.fetchOverlayBundleData(option.url)
@@ -323,30 +355,37 @@ export async function fetchOverlayBundleData(option: any, opts?: { includeTestDa
         const raw = rawOverlayResult.value;
         // Extract watermark from the first element of the array
         if (Array.isArray(raw) && raw.length > 0) {
-          watermarkText = extractWatermarkFromObject(raw[0]);
+          const firstElement = raw[0];
+          // Check if it has overlays array and search through them
+          if (firstElement.overlays && Array.isArray(firstElement.overlays)) {
+            for (const overlay of firstElement.overlays) {
+              const found = extractWatermarkFromObject(overlay);
+              if (found) {
+                watermarkText = found;
+                break;
+              }
+            }
+          }
+          // If not found in overlays, try the root element
+          if (!watermarkText) {
+            watermarkText = extractWatermarkFromObject(firstElement);
+          }
         }
         
-        // Debug logging
-        if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_DEBUG_WATERMARK === '1') {
-          console.debug('[data-layer] Raw overlay result:', {
-            status: rawOverlayResult.status,
-            hasValue: !!raw,
-            isArray: Array.isArray(raw),
-            arrayLength: Array.isArray(raw) ? raw.length : 0,
-            watermarkText,
-            firstElementKeys: Array.isArray(raw) && raw.length > 0 ? Object.keys(raw[0]) : []
-          });
-        }
       } catch (error) {
-        if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_DEBUG_WATERMARK === '1') {
-          console.debug('[data-layer] Error extracting watermark:', error);
-        }
+        console.error('Error extracting watermark from raw data:', error);
       }
     } else if (rawOverlayResult.status === 'rejected') {
-      if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_DEBUG_WATERMARK === '1') {
-        console.debug('[data-layer] Raw overlay fetch failed:', rawOverlayResult.reason);
-      }
+      console.error('Failed to fetch raw overlay data:', rawOverlayResult.reason);
     }
+    
+    // Also try to extract watermark from processed overlay if not found in raw data
+    if (!watermarkText && overlay) {
+      watermarkText = extractWatermarkFromObject(overlay);
+    }
+    
+    
+    
 
     if (!overlay) {
       throw new Error(`Failed to fetch Overlay Bundle for ${option.id}: ${
@@ -378,7 +417,37 @@ export function groupBundlesByLedger(bundles: BundleWithLedger[]): Record<string
     group.sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
   });
 
-  return grouped;
+  // Enforce a specific display order for ledger groups by normalized key
+  const ORDER: string[] = [
+    'candy-prod',
+    'candy-test',
+    'candy-dev',
+    'sovrn-mainnet',
+    'sovrin-stagingnet',
+    'bcovrin-test',
+  ];
+
+  const ordered: Record<string, BundleWithLedger[]> = {};
+
+  // First add known keys in specified order if they exist
+  for (const key of ORDER) {
+    if (grouped[key]) {
+      ordered[key] = grouped[key];
+    }
+  }
+
+  // Append any remaining groups not explicitly ordered, sorted by their display name
+  const remainingKeys = Object.keys(grouped).filter(k => !ORDER.includes(k));
+  remainingKeys.sort((a, b) => {
+    const aName = grouped[a]?.[0]?.ledgerDisplayName || a;
+    const bName = grouped[b]?.[0]?.ledgerDisplayName || b;
+    return aName.localeCompare(bName);
+  });
+  for (const key of remainingKeys) {
+    ordered[key] = grouped[key];
+  }
+
+  return ordered;
 }
 
 // Get available ledger options for filtering
@@ -389,13 +458,35 @@ export function getAvailableLedgerOptions(bundles: BundleWithLedger[]): LedgerOp
     return acc;
   }, {} as Record<string, number>);
 
-  return Object.entries(ledgerCounts)
+  const ORDER: string[] = [
+    'candy-prod',
+    'candy-test',
+    'candy-dev',
+    'sovrn-mainnet',
+    'sovrin-stagingnet',
+    'bcovrin-test',
+  ];
+
+  const options = Object.entries(ledgerCounts)
     .map(([ledger, count]) => ({
       value: ledger,
       label: bundles.find(b => b.ledgerNormalized === ledger)?.ledgerDisplayName || ledger,
       count
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+    }));
+
+  // Sort by custom order first, then by label
+  options.sort((a, b) => {
+    const ai = ORDER.indexOf(a.value);
+    const bi = ORDER.indexOf(b.value);
+    if (ai !== -1 || bi !== -1) {
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    }
+    return a.label.localeCompare(b.label);
+  });
+
+  return options;
 }
 
 // Filter bundles based on search criteria

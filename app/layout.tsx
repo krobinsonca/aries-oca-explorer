@@ -23,13 +23,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        {/* Skip link for keyboard navigation */}
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <ThemeProvider>
           <LanguageProvider>
             <ThemeClassProvider />
             <StyledEngineProvider injectFirst>
               <ThemeWrapper>
                 <Header />
-                <main className='app min-h-screen' style={{ paddingTop: '64px' }}>
+                <main id="main-content" className='app min-h-screen' style={{ paddingTop: '64px' }}>
                   {children}
                 </main>
               </ThemeWrapper>

@@ -41,64 +41,69 @@ function BrandingInitializer({
   useEffect(() => {
     if (!brandingDispatch || !overlay?.branding) return;
 
-    const extractWatermarkText = (ov: any): string => {
+    const extractWatermarkText = (ov: any): string | undefined => {
+      // Only check specific, known watermark fields - no deep scanning
       const cands: any[] = [
         ov?.branding?.watermarkText,
         ov?.branding?.watermark,
-        ov?.branding?.water_mark,
         ov?.metadata?.watermarkText,
         ov?.metadata?.watermark?.text,
         ov?.metadata?.watermark,
-        ov?.watermarkText,
-        ov?.watermark?.text,
+        // Also check direct watermark field in the overlay (not just metadata)
         ov?.watermark,
       ];
+      
       for (const cand of cands) {
         if (cand === undefined || cand === null) continue;
-        if (typeof cand === 'string' && cand.trim()) return cand;
+        if (typeof cand === 'string') {
+          if (cand.trim()) {
+            return cand;
+          } else {
+            // Empty/whitespace string found - explicitly return undefined
+            return undefined;
+          }
+        }
         if (Array.isArray(cand) && cand.length && cand.every(x => typeof x === 'string')) {
-          return (cand as string[]).join(' ');
+          const result = (cand as string[]).join(' ');
+          if (result.trim()) {
+            return result;
+          } else {
+            return undefined;
+          }
         }
-        if (typeof cand === 'object') {
-          if (typeof (cand as any).text === 'string' && (cand as any).text.trim()) return (cand as any).text;
-          const values = Object.values(cand as Record<string, unknown>);
-          const first = values.find(v => typeof v === 'string' && (v as string).trim());
-          if (typeof first === 'string') return first as string;
-        }
-      }
-      // Deep scan for any key containing "watermark"
-      const visited = new Set<any>();
-      const stack: any[] = [ov];
-      while (stack.length) {
-        const cur = stack.pop();
-        if (!cur || typeof cur !== 'object' || visited.has(cur)) continue;
-        visited.add(cur);
-        for (const [k, v] of Object.entries(cur)) {
-          if (k.toLowerCase().includes('watermark')) {
-            if (typeof v === 'string' && v.trim()) return v;
-            if (Array.isArray(v) && v.length && v.every(x => typeof x === 'string')) return (v as string[]).join(' ');
-            if (v && typeof v === 'object') {
-              const vv = (v as any).text;
-              if (typeof vv === 'string' && vv.trim()) return vv;
+        if (typeof cand === 'object' && cand !== null) {
+          if (typeof (cand as any).text === 'string') {
+            if ((cand as any).text.trim()) {
+              return (cand as any).text;
+            } else {
+              return undefined;
             }
           }
-          if (v && typeof v === 'object') stack.push(v);
+          // Check if it's a localized object like { "en": "text", "fr": "texte" }
+          const values = Object.values(cand as Record<string, unknown>);
+          const first = values.find(v => typeof v === 'string' && (v as string).trim());
+          if (typeof first === 'string') {
+            return first;
+          }
+          // Check if all values are empty strings
+          if (values.length > 0 && values.every(v => typeof v === 'string' && !(v as string).trim())) {
+            return undefined;
+          }
         }
       }
-      return '';
+      
+      return undefined;
     };
 
-    const resolvedWatermark = watermarkText || extractWatermarkText(overlay);
+    const extractedWatermark = extractWatermarkText(overlay);
+    const resolvedWatermark = watermarkText || extractedWatermark;
 
-    const DEBUG_WATERMARK = process.env.NEXT_PUBLIC_DEBUG_WATERMARK === '1';
-    if (DEBUG_WATERMARK && typeof window !== 'undefined') {
-      console.debug('[BrandingInitializer] Processing watermark:', {
-        overlayName,
-        watermarkText,
-        resolvedWatermark,
-        branding: overlay.branding
-      });
-    }
+    
+    // Only set watermark if we have valid content
+    const finalWatermark = (typeof resolvedWatermark === 'string' && resolvedWatermark.trim()) || 
+                          (typeof resolvedWatermark === 'object' && resolvedWatermark !== null && Object.values(resolvedWatermark).some(v => typeof v === 'string' && v.trim())) 
+                          ? resolvedWatermark 
+                          : undefined;
 
     brandingDispatch({
       type: ActionType.SET_BRANDING,
@@ -110,7 +115,7 @@ function BrandingInitializer({
         secondaryBackgroundColor: overlay.branding.secondaryBackgroundColor ?? "",
         primaryAttribute: overlay.branding.primaryAttribute ?? "",
         secondaryAttribute: overlay.branding.secondaryAttribute ?? "",
-        watermarkText: resolvedWatermark,
+        watermarkText: finalWatermark,
       }
     });
   }, [brandingDispatch, overlay, watermarkText, overlayName]);
@@ -132,11 +137,34 @@ function OverlayBundleViewContent({ option }: { option: any }) {
   useEffect(() => {
     async function fetchData() {
       const { overlay, data, watermarkText } = await fetchOverlayBundleData(option, { includeTestData: true });
+
+      // Use the same record creation logic as SearchResultBundleCard
+      let attributes: Record<string, string> = data || {};
+
+      // If no test data, derive placeholder attributes from captureBase (handles array or object)
+      if (Object.keys(attributes).length === 0 && (overlay as any)?.captureBase?.attributes) {
+        const cap = (overlay as any).captureBase.attributes;
+        if (Array.isArray(cap)) {
+          cap.forEach((attr: any) => {
+            if (attr?.name) attributes[attr.name] = `........`;
+          });
+        } else if (typeof cap === 'object') {
+          Object.keys(cap).forEach((name) => {
+            attributes[name] = `........`;
+          });
+        }
+      }
+
+      // As a last resort, ensure there is at least one attribute so the formatter initializes
+      if (Object.keys(attributes).length === 0) {
+        attributes = { placeholder: 'sample' };
+      }
+
       const record = new CredentialExchangeRecord({
         threadId: "detail-view",
         protocolVersion: "1.0",
         state: CredentialState.OfferReceived,
-        credentialAttributes: Object.entries(data || {}).map(
+        credentialAttributes: Object.entries(attributes).map(
           ([name, value]) => new CredentialPreviewAttribute({ name, value })
         ),
       });

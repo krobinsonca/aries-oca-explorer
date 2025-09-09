@@ -18,19 +18,18 @@ import {
   AccordionSummary,
   AccordionDetails,
   Chip,
+  IconButton,
 } from '@mui/material';
 import { Clear, ExpandMore, Launch } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
-import { 
+import {
   groupBundlesByLedger,
   getAvailableLedgerOptions,
   filterBundles,
   BundleWithLedger
 } from '@/app/lib/data';
 import SimpleCredentialCard from './SimpleCredentialCard';
-import LanguageSwitcher from './LanguageSwitcher';
 import { useLanguage } from '@/app/contexts/Language';
-import { BrandingProvider } from '@/app/contexts/Branding';
 
 interface EnhancedCredentialFilterProps {
   options: BundleWithLedger[];
@@ -41,7 +40,7 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { language } = useLanguage();
+  const { language, setLanguage } = useLanguage();
 
   // Check if bundles have ledger information loaded
   const hasLedgerInfo = options.length > 0 && options[0].ledger !== undefined;
@@ -55,13 +54,29 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
     }));
   }, [options]);
 
-  // Filter bundles based on current filters
+  // Filter and sort bundles based on current filters
   const filteredBundles = useMemo(() => {
     const filtered = filterBundles(options, {
       ledger: selectedLedger,
       searchTerm: searchTerm
     });
-    return filtered;
+
+    // Sort by issuer (org), then by credential name
+    return filtered.sort((a, b) => {
+      // First sort by issuer/organization
+      const issuerA = a.org || '';
+      const issuerB = b.org || '';
+
+      if (issuerA !== issuerB) {
+        return issuerA.localeCompare(issuerB);
+      }
+
+      // If issuers are the same, sort by credential name
+      const nameA = a.name || '';
+      const nameB = b.name || '';
+
+      return nameA.localeCompare(nameB);
+    });
   }, [options, selectedLedger, searchTerm]);
 
   // Group filtered bundles by ledger for display
@@ -123,53 +138,148 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
         </Typography>
 
         {/* Filter Controls */}
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} md={5}>
-            <TextField
-              fullWidth
-              label="Search bundles"
-              placeholder="Search by name or description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              variant="outlined"
-            />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <FormControl fullWidth>
-              <InputLabel id="ledger-select-label">Filter by Ledger</InputLabel>
-              <Select
-                labelId="ledger-select-label"
-                value={selectedLedger}
-                label="Filter by Ledger"
-                onChange={(e) => setSelectedLedger(e.target.value)}
-              >
-                <MenuItem value="">
-                  <em>All Ledgers</em>
-                </MenuItem>
-                {ledgerOptions.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
+        <Paper
+          elevation={1}
+          sx={{
+            p: 3,
+            mb: 3,
+            backgroundColor: 'background.paper',
+            borderRadius: 2
+          }}
+        >
+
+          <Grid container spacing={3} alignItems="flex-start">
+            {/* Search Field */}
+            <Grid item xs={12} md={5}>
+              <TextField
+                fullWidth
+                label="Search bundles"
+                placeholder="Search by name or description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                variant="outlined"
+                InputProps={{
+                  endAdornment: searchTerm ? (
+                    <IconButton
+                      size="small"
+                      onClick={() => setSearchTerm('')}
+                      sx={{
+                        color: 'text.secondary',
+                        '&:hover': {
+                          color: 'error.main',
+                          backgroundColor: 'error.main',
+                          backgroundColorOpacity: 0.1,
+                        }
+                      }}
+                      aria-label="Clear search"
+                    >
+                      <Clear fontSize="small" />
+                    </IconButton>
+                  ) : null
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'primary.main',
+                    },
+                  }
+                }}
+              />
+            </Grid>
+
+            {/* Ledger Filter */}
+            <Grid item xs={12} md={3}>
+              <FormControl fullWidth>
+                <InputLabel id="ledger-select-label">Filter by Ledger</InputLabel>
+                <Select
+                  labelId="ledger-select-label"
+                  value={selectedLedger}
+                  label="Filter by Ledger"
+                  onChange={(e) => setSelectedLedger(e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    }
+                  }}
+                >
+                  <MenuItem value="">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        All Ledgers
+                      </Typography>
+                    </Box>
                   </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                  {ledgerOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2">
+                          {option.label}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Language Switcher */}
+            <Grid item xs={12} md={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel id="language-select-label">Language</InputLabel>
+                <Select
+                  labelId="language-select-label"
+                  value={language}
+                  label="Language"
+                  onChange={(e) => setLanguage(e.target.value)}
+                  sx={{
+                    height: '56px',
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: 'primary.main',
+                      },
+                    }
+                  }}
+                >
+                  <MenuItem value="en">English</MenuItem>
+                  <MenuItem value="fr">Français</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Clear Filters Button */}
+            <Grid item xs={12} md={2}>
+              <Button
+                fullWidth
+                variant={hasActiveFilters ? "contained" : "outlined"}
+                onClick={clearFilters}
+                disabled={!hasActiveFilters}
+                startIcon={<Clear />}
+                sx={{
+                  height: '56px',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  boxShadow: hasActiveFilters ? 2 : 'none',
+                  '&:hover': {
+                    boxShadow: hasActiveFilters ? 4 : 2,
+                    transform: 'translateY(-1px)',
+                    transition: 'all 0.2s ease-in-out'
+                  },
+                  '&:disabled': {
+                    backgroundColor: 'action.disabledBackground',
+                    color: 'action.disabled',
+                    borderColor: 'action.disabled',
+                    boxShadow: 'none'
+                  }
+                }}
+              >
+                Clear Filters
+              </Button>
+            </Grid>
           </Grid>
-          <Grid item xs={12} md={2}>
-            <LanguageSwitcher />
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={clearFilters}
-              disabled={!hasActiveFilters}
-              startIcon={<Clear />}
-              sx={{ height: '56px' }}
-            >
-              Clear
-            </Button>
-          </Grid>
-        </Grid>
+        </Paper>
 
         {/* Active Filters */}
         {hasActiveFilters && (
@@ -234,16 +344,14 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
               </Typography>
             </AccordionSummary>
             <AccordionDetails>
-              <Grid container spacing={2}>
+              <Grid container spacing={3}>
                 {bundles.map((bundle) => (
-                  <Grid item xs={12} sm={6} md={4} key={bundle.id}>
-                    <BrandingProvider>
-                      <SimpleCredentialCard
-                        bundle={bundle}
-                        onClick={() => handleBundleSelect(bundle)}
-                        language={language}
-                      />
-                    </BrandingProvider>
+                  <Grid item xs={12} sm={6} md={4} lg={4} xl={3} key={bundle.id}>
+                    <SimpleCredentialCard
+                      bundle={bundle}
+                      onClick={() => handleBundleSelect(bundle)}
+                      language={language}
+                    />
                   </Grid>
                 ))}
               </Grid>

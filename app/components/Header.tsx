@@ -21,6 +21,7 @@ export default function Header() {
     readonly || <header style={{ paddingBottom: "10px" }}>
       <AppBar
         position="fixed"
+        role="banner"
         sx={{
           alignItems: "flex-start",
           height: "64px",
@@ -32,12 +33,13 @@ export default function Header() {
           zIndex: 1000,
         }}
       >
-        <Toolbar sx={{ width: "100%" }}>
+        <Toolbar sx={{ width: "100%" }} role="navigation" aria-label="Main navigation">
           {isDetailPage && (
             <Button
               startIcon={<ArrowBack />}
               onClick={() => router.back()}
               variant="outlined"
+              aria-label="Go back to previous page"
               sx={{ 
                 mr: 2,
                 color: 'white',
@@ -54,7 +56,7 @@ export default function Header() {
           
           <Image
             src={imgUrl}
-            alt="Go to the Government of British Columbia website"
+            alt="Government of British Columbia logo - Go to the Government of British Columbia website"
             priority
             style={{
               width: "100%",
@@ -63,7 +65,7 @@ export default function Header() {
               flex: 1,
             }}
           />
-          <Box sx={{ ml: "auto" }}>
+          <Box sx={{ ml: "auto" }} role="complementary" aria-label="Theme controls">
             <ThemeToggle />
           </Box>
         </Toolbar>

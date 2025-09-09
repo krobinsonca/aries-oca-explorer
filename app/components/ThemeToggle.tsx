@@ -13,14 +13,21 @@ export default function ThemeToggle() {
       <IconButton
         onClick={toggleTheme}
         color="inherit"
+        aria-label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
+        aria-pressed={mode === 'dark'}
+        role="switch"
         sx={{
           ml: 1,
           '&:hover': {
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
           },
+          '&:focus': {
+            outline: '2px solid #1976d2',
+            outlineOffset: '2px',
+          },
         }}
       >
-        {mode === 'light' ? <DarkMode /> : <LightMode />}
+        {mode === 'light' ? <DarkMode aria-hidden="true" /> : <LightMode aria-hidden="true" />}
       </IconButton>
     </Tooltip>
   );
