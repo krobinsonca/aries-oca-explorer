@@ -2,6 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
+/* BC Sans Font Faces */
+@font-face {
+  font-family: 'BC Sans';
+  src: url('/fonts/BCSans-Regular.woff2') format('woff2'),
+       url('/fonts/BCSans-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BC Sans';
+  src: url('/fonts/BCSans-Italic.woff2') format('woff2'),
+       url('/fonts/BCSans-Italic.woff') format('woff');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BC Sans';
+  src: url('/fonts/BCSans-Light.woff2') format('woff2'),
+       url('/fonts/BCSans-Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BC Sans';
+  src: url('/fonts/BCSans-LightItalic.woff2') format('woff2'),
+       url('/fonts/BCSans-LightItalic.woff') format('woff');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BC Sans';
+  src: url('/fonts/BCSans-Bold.woff2') format('woff2'),
+       url('/fonts/BCSans-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BC Sans';
+  src: url('/fonts/BCSans-BoldItalic.woff2') format('woff2'),
+       url('/fonts/BCSans-BoldItalic.woff') format('woff');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 .app {
   padding: 1rem;
+}
+
+/* Ensure smooth transitions for theme changes */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode styles for the main app container */
+.dark .app {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+/* Light mode styles for the main app container */
+.light .app {
+  background-color: #f5f5f5;
+  color: #333333;
 }

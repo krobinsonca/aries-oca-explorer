@@ -1,5 +1,4 @@
 import React, { CSSProperties } from "react";
-import { View, Image, ImageBackground, Text, FlatList } from "react-native";
 import { useBranding } from "../contexts/Branding";
 import { textColorForBackground } from "@hyperledger/aries-oca";
 import { OverlayBundle } from "@hyperledger/aries-oca";
@@ -10,282 +9,75 @@ import {
   DisplayAttribute,
   LocalizedCredential,
 } from "@hyperledger/aries-oca";
-import AttributeValue from "./AttributeValue";
-import AttributeLabel from "./AttributeLabel";
 
 const width = 360;
-const paddingHorizontal = 24;
-const paddingVertical = 16;
-const logoHeight = 80;
+const borderRadius = 10;
+const padding = width * 0.05;
+const logoHeight = width * 0.12;
 
-function computedStyles(): Record<
-  string,
-  CSSProperties | Record<string, number>
-> {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const branding = useBranding();
-
+function computedStyles(branding: any): Record<string, CSSProperties> {
   return {
     container: {
-      backgroundColor: branding?.primaryBackgroundColor,
-      display: "flex",
+      borderRadius: borderRadius,
+      position: "relative",
+      overflow: "hidden",
+    },
+    cardContainer: {
+      flexDirection: "row",
+      minHeight: 0.45 * width, // Increased height for better BC Wallet proportion
+      backgroundColor: branding?.primaryBackgroundColor || "#003366",
+      borderRadius: borderRadius,
+      position: "relative",
+      overflow: "hidden",
+      marginBottom: 16,
     },
     primaryBodyContainer: {
-      paddingHorizontal,
-      paddingVertical,
+      flexShrink: 1,
+      padding: 0,
+      margin: -1,
+      marginLeft: -1 * logoHeight + padding,
+      paddingTop: padding,
     },
     secondaryBodyContainer: {
-      height: 1.5 * logoHeight,
+      width: logoHeight,
+      borderTopLeftRadius: borderRadius,
+      borderBottomLeftRadius: borderRadius,
       backgroundColor:
-        (branding?.backgroundImage
+        (branding?.backgroundImageSlice
           ? "rgba(0, 0, 0, 0)"
           : branding?.secondaryBackgroundColor) || "rgba(0, 0, 0, 0.24)",
     },
     logoContainer: {
-      top: -0.5 * logoHeight,
-      left: paddingHorizontal,
-      marginBottom: -1 * logoHeight,
+      top: padding,
+      left: -1 * logoHeight + padding,
       width: logoHeight,
       height: logoHeight,
-      backgroundColor: "#ffffff",
-      borderRadius: 8,
+      backgroundColor: "rgba(255, 255, 255, 1)",
+      borderRadius: 12,
       justifyContent: "center",
       alignItems: "center",
+      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
     },
     textContainer: {
       color: textColorForBackground(
-        branding?.primaryBackgroundColor || "#313132"
+        branding?.primaryBackgroundColor || "rgba(0, 0, 0, 0.24)"
       ),
       flexShrink: 1,
-    },
-    title: {
-      fontSize: 20,
-      fontWeight: "bold",
-    },
-    label: {
-      fontSize: 14,
-      fontWeight: "bold",
-    },
-    labelSubtitle: {
-      fontSize: 14,
-      fontWeight: "normal",
     },
     normal: {
       fontSize: 18,
       fontWeight: "normal",
     },
     listText: {
-      color: "#313132",
+      fontSize: 14,
+      fontWeight: "normal",
     },
     listBorder: {
-      borderColor: "#F2F2F2",
-      borderBottomWidth: 2,
-      paddingTop: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: "rgba(0, 0, 0, 0.1)",
+      marginTop: 8,
     },
   };
-}
-
-function DetailLogo({
-  credential,
-  styles,
-}: {
-  credential?: LocalizedCredential;
-  styles?: Record<string, CSSProperties>;
-}) {
-  const branding = useBranding();
-
-  return (
-    <View style={styles?.logoContainer}>
-      {branding?.logo ? (
-        <Image
-          source={branding?.logo}
-          alt="Logo"
-          style={{
-            resizeMode: "cover",
-            width: logoHeight,
-            height: logoHeight,
-            borderRadius: 8,
-          }}
-        />
-      ) : (
-        <Text style={[styles?.title, { fontSize: 0.5 * logoHeight }]}>
-          {(credential?.issuer ?? credential?.name ?? "C")
-            ?.charAt(0)
-            .toUpperCase()}
-        </Text>
-      )}
-    </View>
-  );
-}
-
-function DetailSecondaryBody({
-  styles,
-}: {
-  overlay?: OverlayBundle | undefined;
-  styles?: Record<string, CSSProperties>;
-}) {
-  const branding = useBranding();
-
-  return (
-    <View>
-      {branding?.backgroundImage ? (
-        <ImageBackground
-          source={branding?.backgroundImage}
-          imageStyle={{
-            resizeMode: "cover",
-          }}
-          alt="Background"
-        >
-          <View style={styles?.secondaryBodyContainer} />
-        </ImageBackground>
-      ) : (
-        <View style={styles?.secondaryBodyContainer} />
-      )}
-    </View>
-  );
-}
-
-function DetailPrimaryBody({
-  credential,
-  styles,
-}: {
-  credential?: LocalizedCredential;
-  styles?: Record<string, CSSProperties>;
-}) {
-  return (
-    <View style={styles?.primaryBodyContainer}>
-      <View>
-        <Text
-          style={[
-            styles?.label,
-            styles?.textContainer,
-            {
-              paddingLeft: logoHeight + paddingVertical,
-              paddingBottom: paddingVertical,
-              lineHeight: 19,
-              opacity: 0.8,
-            },
-          ]}
-          numberOfLines={1}
-        >
-          {credential?.issuer}
-        </Text>
-        <Text
-          style={[
-            styles?.normal,
-            styles?.textContainer,
-            {
-              lineHeight: 24,
-            },
-          ]}
-        >
-          {credential?.name}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-function Detail({
-  credential,
-  styles,
-  overlay,
-  language
-}: {
-  credential?: LocalizedCredential;
-  styles?: Record<string, CSSProperties>;
-  overlay?: OverlayBundle;
-  language?: string;
-}) {
-  return (
-    <View>
-      <View style={styles?.container}>
-        <DetailSecondaryBody styles={styles} />
-        <DetailLogo credential={credential} styles={styles} />
-        <DetailPrimaryBody credential={credential} styles={styles} />
-      </View>
-      <View>
-        <DetailList credential={credential} styles={styles} overlay={overlay} language={language} />
-      </View>
-    </View>
-  );
-}
-
-function DetailList({
-  credential,
-  styles,
-  overlay,
-  language
-}: {
-  credential?: LocalizedCredential;
-  styles?: Record<string, CSSProperties>;
-  overlay?: OverlayBundle;
-  language?: string;
-}) {
-  return (
-    <FlatList
-      data={credential?.attributes ?? []}
-      renderItem={({ item: attribute }: { item: DisplayAttribute }) => {
-        const overlayAttribute = getOverlayAttribute(attribute.name, overlay, credential, language) ?? attribute;
-        return (
-          <View
-            style={{
-              paddingHorizontal,
-              paddingTop: paddingVertical,
-            }}
-          >
-            <AttributeLabel
-              attribute={overlayAttribute}
-              styles={[
-                styles?.normal ?? {},
-                styles?.listText ?? {},
-                { fontWeight: "bold" },
-              ]}
-            />
-            <AttributeValue
-              attribute={overlayAttribute}
-              styles={[
-                styles?.normal ?? {},
-                styles?.listText ?? {},
-                { paddingVertical: 4 } as CSSProperties,
-              ]}
-              size={logoHeight}
-            />
-            <View style={styles?.listBorder} />
-          </View>
-        );
-      }}
-    />
-  );
-}
-
-function CredentialDetail10({
-  overlay,
-  record,
-  language,
-}: {
-  overlay?: OverlayBundle;
-  record?: CredentialExchangeRecord;
-  language: string;
-}) {
-  const styles = computedStyles();
-
-  const [formatter, setFormatter] = useState<CredentialFormatter | undefined>();
-
-  useMemo(() => {
-    if (!(overlay && record)) {
-      return;
-    }
-    setFormatter(new CredentialFormatter(overlay, record));
-  }, [overlay, record]);
-
-  const localizedCredential = formatter?.localizedCredential(language ?? "en");
-
-  return (
-    <View style={{ width }}>
-      <Detail credential={localizedCredential} styles={styles} overlay={overlay} language={language} />
-    </View>
-  );
 }
 
 function getOverlayAttribute(
@@ -309,6 +101,345 @@ function getOverlayAttribute(
   }
 
   return;
+}
+
+
+function CredentialDetail10({
+  overlay,
+  record,
+  language,
+}: {
+  overlay?: OverlayBundle;
+  record?: CredentialExchangeRecord;
+  language?: string;
+}) {
+  const branding = useBranding();
+  const styles = computedStyles(branding);
+
+  const [formatter, setFormatter] = useState<CredentialFormatter | undefined>();
+
+  useMemo(() => {
+    if (!(overlay && record)) {
+      return;
+    }
+    setFormatter(new CredentialFormatter(overlay, record));
+  }, [overlay, record]);
+
+  const localizedCredential = formatter?.localizedCredential(language ?? "en");
+
+  return (
+    <div style={{ width: '360px', margin: '0 auto' }}>
+      {/* BC Wallet Style Credential Details */}
+      <div
+        style={{
+          backgroundColor: 'white',
+          borderRadius: 12,
+          overflow: 'hidden',
+          border: '1px solid #e0e0e0',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        }}
+      >
+        {/* BC Wallet Style Header - Background Image Top, Blue Section Bottom */}
+        <div
+          style={{
+            position: 'relative',
+            height: '200px',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Background Image Section - Top Half */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '50%',
+              backgroundImage: branding?.backgroundImage ? `url(${branding.backgroundImage})` : undefined,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundColor: '#333',
+            }}
+          />
+          
+          {/* Blue Background Section - Bottom Half */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: '50%',
+              backgroundColor: branding?.primaryBackgroundColor || '#003366',
+            }}
+          />
+
+          {/* Logo Container - Spanning Both Sections */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '24px',
+              transform: 'translateY(-50%)',
+              width: '80px',
+              height: '80px',
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+              zIndex: 10,
+            }}
+          >
+            {branding?.logo ? (
+              <img
+                src={branding.logo}
+                alt="BC Logo"
+                style={{ 
+                  width: '72px', 
+                  height: '72px',
+                  objectFit: 'contain' 
+                }}
+              />
+            ) : (
+              <div style={{ 
+                fontSize: '40px', 
+                color: '#003366',
+                fontWeight: 'bold'
+              }}>🏛️</div>
+            )}
+          </div>
+          
+          {/* Text Content Layout */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: '50%',
+              padding: '20px 24px',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {/* Top Row: Issuer Name (to the right of logo) */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                alignItems: 'flex-start',
+                paddingTop: '2px',
+                paddingRight: '0px',
+                marginBottom: 'auto',
+              }}
+            >
+              <div
+                style={{
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  lineHeight: 1.3,
+                  letterSpacing: '0.3px',
+                  fontFamily: 'BC Sans, Arial, sans-serif',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '220px',
+                }}
+              >
+                {overlay?.metadata?.issuer ? (
+                  typeof overlay.metadata.issuer === 'string' 
+                    ? overlay.metadata.issuer 
+                    : overlay.metadata.issuer?.[language || 'en'] || ''
+                ) : ''}
+              </div>
+            </div>
+            
+            {/* Bottom Row: Credential Name (below logo, aligned left) */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                paddingBottom: '0px',
+                height: '100%',
+              }}
+            >
+              <div
+                style={{
+                  color: 'white',
+                  fontSize: '20px',
+                  fontWeight: '300',
+                  lineHeight: 1.2,
+                  letterSpacing: '0.3px',
+                  fontFamily: 'BC Sans, Arial, sans-serif',
+                }}
+              >
+                {overlay?.metadata?.name ? (
+                  typeof overlay.metadata.name === 'string' 
+                    ? overlay.metadata.name 
+                    : overlay.metadata.name?.[language || 'en'] || ''
+                ) : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* White Details Section */}
+        <div style={{ backgroundColor: 'white' }}>
+          {/* Hide All Button */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'flex-end',
+              padding: 16,
+              paddingBottom: 8,
+            }}
+          >
+            <div
+              style={{
+                color: '#1976d2',
+                fontSize: 14,
+                fontWeight: '500',
+                fontFamily: 'BC Sans, Arial, sans-serif',
+              }}
+            >
+              Hide all
+            </div>
+          </div>
+
+          {/* Attributes List */}
+          {localizedCredential?.attributes?.map((attr, index) => {
+            const overlayAttribute = getOverlayAttribute(attr.name, overlay, localizedCredential, language) ?? attr;
+            const displayLabel = overlayAttribute?.label || overlayAttribute?.name || '';
+            const displayValue = overlayAttribute?.value || attr?.value || '.......';
+            
+            return (
+              <div
+                key={index}
+                style={{
+                  paddingLeft: 16,
+                  paddingRight: 16,
+                  paddingTop: 12,
+                  paddingBottom: 12,
+                  borderBottom: '1px solid #e0e0e0',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontWeight: '600',
+                      fontSize: 16,
+                      color: '#333',
+                      marginBottom: 4,
+                      fontFamily: 'BC Sans, Arial, sans-serif',
+                    }}
+                  >
+                    {displayLabel}
+                  </div>
+                  <div
+                    style={{
+                      fontWeight: '400',
+                      fontSize: 16,
+                      color: '#333',
+                      fontFamily: 'BC Sans, Arial, sans-serif',
+                    }}
+                  >
+                    {displayValue}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    color: '#1976d2',
+                    fontSize: 14,
+                    fontWeight: '500',
+                    fontFamily: 'BC Sans, Arial, sans-serif',
+                  }}
+                >
+                  Show
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Issued Information */}
+          <div
+            style={{
+              backgroundColor: '#f5f5f5',
+              padding: 16,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 14,
+                color: '#666',
+                marginBottom: 4,
+                fontWeight: '500',
+                fontFamily: 'BC Sans, Arial, sans-serif',
+              }}
+            >
+              Issued by: {overlay?.metadata?.issuer ? (
+                typeof overlay.metadata.issuer === 'string' 
+                  ? overlay.metadata.issuer 
+                  : overlay.metadata.issuer?.[language || 'en']
+              ) : ''}
+            </div>
+            <div
+              style={{
+                fontSize: 14,
+                color: '#666',
+                fontWeight: '500',
+                fontFamily: 'BC Sans, Arial, sans-serif',
+              }}
+            >
+              Issued: {new Date().toISOString().replace('T', ' ').substring(0, 19)} UTC
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ padding: 16 }}>
+            <div style={{ marginBottom: 12 }}>
+              <div
+                style={{
+                  color: '#1976d2',
+                  fontSize: 14,
+                  fontWeight: '500',
+                  fontFamily: 'BC Sans, Arial, sans-serif',
+                }}
+              >
+                View JSON Details
+              </div>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
+              <div style={{ marginRight: 8, fontSize: 16 }}>🗑️</div>
+              <div
+                style={{
+                  color: '#d32f2f',
+                  fontSize: 14,
+                  fontWeight: '500',
+                  fontFamily: 'BC Sans, Arial, sans-serif',
+                }}
+              >
+                Remove from wallet
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default CredentialDetail10;
