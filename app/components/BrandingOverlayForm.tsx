@@ -48,9 +48,13 @@ export default function BrandingOverlayForm({
       });
   }, [overlay, dispatch]);
 
+  if (readonly) {
+    return null;
+  }
+
   return (
-    readonly || <div id="overlay-bundle-branding-form">
-      <div id="overlay-bundle-branding-form-fields">
+    <div id="overlay-bundle-branding-form">
+      <div id="overlay-bundle-branding-form-fields" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <ImageField
           id="logo"
           label="Logo"
@@ -184,7 +188,7 @@ export default function BrandingOverlayForm({
           placeholder="e.g., NON-PRODUCTION"
         />
       </div>
-      <FormControl margin="dense" size="small">
+      <FormControl margin="dense" size="small" style={{ width: '100%', marginTop: '16px' }}>
         <Button
           id="overlay-branding-download-branding-overlay"
           disabled={!branding}
