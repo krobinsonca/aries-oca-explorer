@@ -134,6 +134,11 @@ function OverlayBundleViewContent({ option }: { option: any }) {
   }>({ overlay: undefined, record: undefined });
   const [language, setLanguage] = useState<string>("");
 
+  // Reset scroll position when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     async function fetchData() {
       const { overlay, data, watermarkText } = await fetchOverlayBundleData(option, { includeTestData: true });
