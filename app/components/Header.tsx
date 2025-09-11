@@ -1,31 +1,63 @@
 'use client';
 
 import React from "react";
-import { AppBar, Toolbar } from "@mui/material";
-// import { Info } from "@mui/icons-material";
+import { AppBar, Toolbar, Button, Box } from "@mui/material";
+import { ArrowBack } from "@mui/icons-material";
 import imgUrl from "../assets/images/BCID_H_rgb_rev.svg";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Header() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const readonly = searchParams.get('view') === 'readonly';
+  
+  // Check if we're on a detail page (identifier/[id])
+  const isDetailPage = pathname?.startsWith('/identifier/');
 
   return (
     readonly || <header style={{ paddingBottom: "10px" }}>
       <AppBar
-        position="static"
+        position="fixed"
+        role="banner"
         sx={{
           alignItems: "flex-start",
           height: "64px",
           flex: 1,
           justifyContent: "left",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ width: "100%" }} role="navigation" aria-label="Main navigation">
+          {isDetailPage && (
+            <Button
+              startIcon={<ArrowBack />}
+              onClick={() => router.back()}
+              variant="outlined"
+              aria-label="Go back to previous page"
+              sx={{ 
+                mr: 2,
+                color: 'white',
+                borderColor: 'white',
+                '&:hover': {
+                  borderColor: 'white',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                }
+              }}
+            >
+              Back
+            </Button>
+          )}
+          
           <Image
             src={imgUrl}
-            alt="Go to the Government of British Columbia website"
+            alt="Government of British Columbia logo - Go to the Government of British Columbia website"
+            priority
             style={{
               width: "100%",
               height: "100%",
@@ -33,9 +65,9 @@ export default function Header() {
               flex: 1,
             }}
           />
-          {/* <button onClick={callback}>
-          <Info />
-        </button> */}
+          <Box sx={{ ml: "auto" }} role="complementary" aria-label="Theme controls">
+            <ThemeToggle />
+          </Box>
         </Toolbar>
       </AppBar>
     </header>
