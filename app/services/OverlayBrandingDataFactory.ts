@@ -18,6 +18,7 @@ class BrandingOverlayDataFactory {
       secondaryAttribute,
       issuedDateAttribute,
       expiryDateAttribute,
+      watermarkText,
     } = branding;
     return {
       capture_base: captureBase ?? "",
@@ -32,6 +33,7 @@ class BrandingOverlayDataFactory {
       secondary_attribute: secondaryAttribute ?? "",
       issued_date_attribute: issuedDateAttribute ?? "",
       expiry_date_attribute: expiryDateAttribute ?? "",
+      ...(watermarkText && { watermark: watermarkText }),
     };
   }
 }

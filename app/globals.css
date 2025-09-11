@@ -2,6 +2,147 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Set BC Sans as the default font for the entire application */
+* {
+  font-family: 'BC Sans', 'Noto Sans', 'Verdana', 'Arial', sans-serif;
+}
+
+/* BC Sans Font Faces */
+@font-face {
+  font-family: 'BC Sans';
+  src: url('/fonts/BCSans-Regular.woff2') format('woff2'),
+       url('/fonts/BCSans-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BC Sans';
+  src: url('/fonts/BCSans-Italic.woff2') format('woff2'),
+       url('/fonts/BCSans-Italic.woff') format('woff');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BC Sans';
+  src: url('/fonts/BCSans-Light.woff2') format('woff2'),
+       url('/fonts/BCSans-Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BC Sans';
+  src: url('/fonts/BCSans-LightItalic.woff2') format('woff2'),
+       url('/fonts/BCSans-LightItalic.woff') format('woff');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BC Sans';
+  src: url('/fonts/BCSans-Bold.woff2') format('woff2'),
+       url('/fonts/BCSans-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BC Sans';
+  src: url('/fonts/BCSans-BoldItalic.woff2') format('woff2'),
+       url('/fonts/BCSans-BoldItalic.woff') format('woff');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 .app {
   padding: 1rem;
+  font-family: 'BC Sans', 'Noto Sans', 'Verdana', 'Arial', sans-serif;
+  font-size: 16px; /* WCAG recommended minimum font size */
+  line-height: 1.6; /* WCAG recommended line height */
+}
+
+/* Ensure smooth transitions for theme changes */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode styles for the main app container */
+.dark .app {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+/* Light mode styles for the main app container */
+.light .app {
+  background-color: #f5f5f5;
+  color: #333333;
+}
+
+/* WCAG Accessibility Improvements */
+/* Focus indicators for keyboard navigation */
+*:focus {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
+}
+
+/* Skip link for keyboard users */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  text-decoration: none;
+  z-index: 1000;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .app {
+    background-color: #ffffff;
+    color: #000000;
+  }
+  
+  .dark .app {
+    background-color: #000000;
+    color: #ffffff;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Ensure sufficient color contrast for text */
+.text-primary {
+  color: #333333;
+}
+
+.text-secondary {
+  color: #666666;
+}
+
+.dark .text-primary {
+  color: #ffffff;
+}
+
+.dark .text-secondary {
+  color: #b3b3b3;
 }
