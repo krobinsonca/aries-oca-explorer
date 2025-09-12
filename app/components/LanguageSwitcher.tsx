@@ -41,8 +41,8 @@ export default function LanguageSwitcher() {
         }}
       >
         {availableLanguages.map((lang) => (
-          <MenuItem 
-            key={lang} 
+          <MenuItem
+            key={lang}
             value={lang}
             role="option"
             aria-selected={language === lang}

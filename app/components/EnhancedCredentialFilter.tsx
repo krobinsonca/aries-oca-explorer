@@ -31,6 +31,8 @@ import {
 import SimpleCredentialCard from './SimpleCredentialCard';
 import { useLanguage } from '@/app/contexts/Language';
 
+type Language = 'en' | 'fr';
+
 interface EnhancedCredentialFilterProps {
   options: BundleWithLedger[];
 }
@@ -133,7 +135,7 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
           OCA Bundle Explorer
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Explore and filter through available credential bundles. Search by name or description, 
+          Explore and filter through available credential bundles. Search by name or description,
           or filter by ledger network.
         </Typography>
 
@@ -232,7 +234,7 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
                   labelId="language-select-label"
                   value={language}
                   label="Language"
-                  onChange={(e) => setLanguage(e.target.value)}
+                  onChange={(e) => setLanguage(e.target.value as Language)}
                   sx={{
                     height: '56px',
                     '& .MuiOutlinedInput-root': {
@@ -334,11 +336,11 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
               id={`${ledger}-header`}
             >
               <Typography variant="h6" component="div">
-                {bundles[0]?.ledgerDisplayName || ledger || 'Unknown Ledger'} 
-                <Chip 
-                  label={bundles.length} 
-                  size="small" 
-                  sx={{ ml: 2 }} 
+                {bundles[0]?.ledgerDisplayName || ledger || 'Unknown Ledger'}
+                <Chip
+                  label={bundles.length}
+                  size="small"
+                  sx={{ ml: 2 }}
                   color="primary"
                 />
               </Typography>
