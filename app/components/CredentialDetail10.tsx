@@ -1,4 +1,5 @@
 import React, { CSSProperties } from "react";
+import Image from "next/image";
 import { useBranding } from "../contexts/Branding";
 import { textColorForBackground } from "@hyperledger/aries-oca";
 import { OverlayBundle } from "@hyperledger/aries-oca";
@@ -122,7 +123,9 @@ function CredentialDetail10({
     if (!(overlay && record)) {
       return;
     }
-    setFormatter(new CredentialFormatter(overlay, record));
+    // Cast to the expected type to handle compatibility between aries-framework and credo-ts
+    const compatibleRecord = record as any;
+    setFormatter(new CredentialFormatter(overlay, compatibleRecord));
   }, [overlay, record]);
 
   const localizedCredential = formatter?.localizedCredential(language ?? "en");
@@ -193,12 +196,12 @@ function CredentialDetail10({
             }}
           >
             {branding?.logo ? (
-              <img
+              <Image
                 src={branding.logo}
                 alt="BC Logo"
+                width={72}
+                height={72}
                 style={{
-                  width: '72px',
-                  height: '72px',
                   objectFit: 'contain'
                 }}
               />

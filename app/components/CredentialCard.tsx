@@ -458,7 +458,9 @@ function CredentialCard({
     if (!(overlay && record)) {
       return;
     }
-    setFormatter(new CredentialFormatter(overlay, record));
+    // Cast to the expected type to handle compatibility between aries-framework and credo-ts
+    const compatibleRecord = record as any;
+    setFormatter(new CredentialFormatter(overlay, compatibleRecord));
   }, [overlay, record]);
 
   const localizedCredential = formatter?.localizedCredential(language ?? "en");
