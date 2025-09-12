@@ -31,8 +31,6 @@ import {
 import SimpleCredentialCard from './SimpleCredentialCard';
 import { useLanguage } from '@/app/contexts/Language';
 
-type Language = 'en' | 'fr';
-
 interface EnhancedCredentialFilterProps {
   options: BundleWithLedger[];
 }
@@ -234,7 +232,7 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
                   labelId="language-select-label"
                   value={language}
                   label="Language"
-                  onChange={(e) => setLanguage(e.target.value as Language)}
+                  onChange={(e) => setLanguage(e.target.value as 'en' | 'fr')}
                   sx={{
                     height: '56px',
                     '& .MuiOutlinedInput-root': {

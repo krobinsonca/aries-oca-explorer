@@ -190,7 +190,7 @@ function SimpleCredentialCardContent({ bundle, onClick, language = 'en' }: Simpl
     return () => {
       isMounted = false;
     };
-  }, [bundle.id]);
+  }, [bundle]);
 
   // Branding is now handled by BrandingInitializer component
 
@@ -268,7 +268,7 @@ function SimpleCredentialCardWithBranding({ bundle, onClick, language = 'en' }: 
     return () => {
       isMounted = false;
     };
-  }, [bundle.id]);
+  }, [bundle]);
 
   return (
     <>
