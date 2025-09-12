@@ -36,7 +36,7 @@ class OverlayBundleFactory {
           // Add cache control to avoid repeated requests
           cache: "no-cache"
         });
-        
+
         clearTimeout(timeoutId);
 
         if (!response.ok) {
@@ -61,28 +61,28 @@ class OverlayBundleFactory {
           return {};
         }
 
-        const data = parse(csv, { 
-          delimiter: ", ", 
+        const data = parse(csv, {
+          delimiter: ", ",
           columns: true,
           // Skip empty lines and handle malformed CSV gracefully
           skip_empty_lines: true,
           relax_column_count: true
         });
-        
+
         return data[0] ?? ({} as Record<string, string>);
-        
+
       } catch (fetchError) {
         clearTimeout(timeoutId);
-        
+
         // If it's an abort error (timeout) or 404, just return empty object
         if (fetchError instanceof Error && (
-          fetchError.name === 'AbortError' || 
+          fetchError.name === 'AbortError' ||
           fetchError.message.includes('fetch') ||
           fetchError.message.includes('network')
         )) {
           return {};
         }
-        
+
         // Re-throw unexpected errors
         throw fetchError;
       }

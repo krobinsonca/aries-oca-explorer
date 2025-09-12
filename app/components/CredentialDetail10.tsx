@@ -161,7 +161,7 @@ function CredentialDetail10({
               backgroundColor: '#333',
             }}
           />
-          
+
           {/* Blue Background Section - Bottom Half */}
           <div
             style={{
@@ -196,21 +196,21 @@ function CredentialDetail10({
               <img
                 src={branding.logo}
                 alt="BC Logo"
-                style={{ 
-                  width: '72px', 
+                style={{
+                  width: '72px',
                   height: '72px',
-                  objectFit: 'contain' 
+                  objectFit: 'contain'
                 }}
               />
             ) : (
-              <div style={{ 
-                fontSize: '40px', 
+              <div style={{
+                fontSize: '40px',
                 color: '#003366',
                 fontWeight: 'bold'
               }}>🏛️</div>
             )}
           </div>
-          
+
           {/* Text Content Layout */}
           <div
             style={{
@@ -250,13 +250,13 @@ function CredentialDetail10({
                 }}
               >
                 {overlay?.metadata?.issuer ? (
-                  typeof overlay.metadata.issuer === 'string' 
-                    ? overlay.metadata.issuer 
+                  typeof overlay.metadata.issuer === 'string'
+                    ? overlay.metadata.issuer
                     : overlay.metadata.issuer?.[language || 'en'] || ''
                 ) : ''}
               </div>
             </div>
-            
+
             {/* Bottom Row: Credential Name (below logo, aligned left) */}
             <div
               style={{
@@ -277,8 +277,8 @@ function CredentialDetail10({
                 }}
               >
                 {overlay?.metadata?.name ? (
-                  typeof overlay.metadata.name === 'string' 
-                    ? overlay.metadata.name 
+                  typeof overlay.metadata.name === 'string'
+                    ? overlay.metadata.name
                     : overlay.metadata.name?.[language || 'en'] || ''
                 ) : ''}
               </div>
@@ -315,7 +315,7 @@ function CredentialDetail10({
             const overlayAttribute = getOverlayAttribute(attr.name, overlay, localizedCredential, language) ?? attr;
             const displayLabel = overlayAttribute?.label || overlayAttribute?.name || '';
             const displayValue = overlayAttribute?.value || attr?.value || '.......';
-            
+
             return (
               <div
                 key={index}
@@ -385,8 +385,8 @@ function CredentialDetail10({
               }}
             >
               Issued by: {overlay?.metadata?.issuer ? (
-                typeof overlay.metadata.issuer === 'string' 
-                  ? overlay.metadata.issuer 
+                typeof overlay.metadata.issuer === 'string'
+                  ? overlay.metadata.issuer
                   : overlay.metadata.issuer?.[language || 'en']
               ) : ''}
             </div>

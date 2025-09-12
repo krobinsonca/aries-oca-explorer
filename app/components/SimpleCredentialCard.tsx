@@ -163,12 +163,12 @@ function SimpleCredentialCardContent({ bundle, onClick, language = 'en' }: Simpl
         setError(null);
 
         const result = await fetchOverlayBundleData(bundle, { includeTestData: false });
-        
+
         if (!isMounted) return;
 
         if (result && result.overlay) {
           setOverlay(result.overlay);
-          setWatermarkText(result.watermarkText);
+          setWatermarkText(typeof result.watermarkText === 'string' ? result.watermarkText : undefined);
           // Create credential record for rendering
           const record = createCredentialRecord(result.overlay, bundle, result.data);
           setMockRecord(record);
@@ -231,7 +231,7 @@ function SimpleCredentialCardContent({ bundle, onClick, language = 'en' }: Simpl
       }}
       onClick={onClick}
     >
-      <CredentialCard overlay={overlay} record={mockRecord} language={language} />
+      <CredentialCard overlay={overlay || undefined} record={mockRecord || undefined} language={language} />
     </Box>
   );
 }
@@ -252,7 +252,7 @@ function SimpleCredentialCardWithBranding({ bundle, onClick, language = 'en' }: 
 
         if (result && result.overlay) {
           setOverlay(result.overlay);
-          setWatermarkText(result.watermarkText);
+          setWatermarkText(typeof result.watermarkText === 'string' ? result.watermarkText : undefined);
           // Create credential record for rendering
           const record = createCredentialRecord(result.overlay, bundle, result.data);
           setMockRecord(record);
