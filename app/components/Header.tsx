@@ -13,7 +13,7 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const readonly = searchParams.get('view') === 'readonly';
-  
+
   // Check if we're on a detail page (identifier/[id])
   const isDetailPage = pathname?.startsWith('/identifier/');
 
@@ -40,7 +40,7 @@ export default function Header() {
               onClick={() => router.back()}
               variant="outlined"
               aria-label="Go back to previous page"
-              sx={{ 
+              sx={{
                 mr: 2,
                 color: 'white',
                 borderColor: 'white',
@@ -53,7 +53,7 @@ export default function Header() {
               Back
             </Button>
           )}
-          
+
           <Image
             src={imgUrl}
             alt="Government of British Columbia logo - Go to the Government of British Columbia website"

@@ -85,10 +85,10 @@ export function normalizeLedgerValue(ledger: string | undefined): string {
 // Get a user-friendly display name for a ledger
 export function getLedgerDisplayName(ledger: string | undefined): string {
   if (!ledger) return "Unknown Ledger";
-  
+
   // Check if we have a normalized mapping
   const normalized = normalizeLedgerValue(ledger);
-  
+
   // Return a clean, readable version
   switch (normalized) {
     case "candy-prod":
@@ -118,7 +118,7 @@ export function getLedgerDisplayName(ledger: string | undefined): string {
 // Map normalized ledger ids to canonical explorer URLs
 function getLedgerExplorerUrl(ledgerNormalized: string | undefined): string | undefined {
   if (!ledgerNormalized) return undefined;
-  
+
   switch (ledgerNormalized) {
     case "candy-prod":
       return "https://candyscan.idlab.org/home/CANDY_PROD";
@@ -136,11 +136,11 @@ export function extractLedgerFromReadme(readmeContent: string): { ledger?: strin
   const lines = readmeContent.split("\n");
   let ledger: string | undefined;
   let ledgerUrl: string | undefined;
-  
+
   // Look for the table header and extract ledger info
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    
+
     // Check if this line contains the table header
     if (line.includes("| Identifier") && line.includes("| Location") && line.includes("| URL")) {
       // Look for the next non-empty line after the separator line
@@ -159,7 +159,7 @@ export function extractLedgerFromReadme(readmeContent: string): { ledger?: strin
       break;
     }
   }
-  
+
   return { ledger, ledgerUrl };
 }
 
@@ -169,22 +169,22 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{ ledger?: s
   if (readmeCache.has(ocabundle)) {
     return readmeCache.get(ocabundle)!;
   }
-  
+
   try {
     // Convert OCABundle.json path to README.md path
     const readmePath = ocabundle.replace("OCABundle.json", "README.md");
     const readmeUrl = `${GITHUB_RAW_URL}/${readmePath}`;
-    
+
     const response = await fetch(readmeUrl);
     if (!response.ok) {
       const emptyResult = {};
       readmeCache.set(ocabundle, emptyResult);
       return emptyResult;
     }
-    
+
     const readmeContent = await response.text();
     const ledgerInfo = extractLedgerFromReadme(readmeContent);
-    
+
     // Cache the result
     readmeCache.set(ocabundle, ledgerInfo);
     return ledgerInfo;
@@ -202,26 +202,26 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const body = await response.text();
     const options: any[] = JSON.parse(body);
-    
+
     // Enhance OCA bundles with ledger information
     const enhancedBundles: BundleWithLedger[] = [];
-    
+
     // Process in batches to avoid overwhelming the GitHub API
     const batchSize = 5;
     for (let i = 0; i < options.length; i += batchSize) {
       const batch = options.slice(i, i + batchSize);
-      
+
       const batchPromises = batch.map(async (bundle): Promise<BundleWithLedger> => {
         const ledgerInfo = await fetchSchemaReadme(bundle.ocabundle);
-        
+
         // Normalize ledger value and create display name
         const ledgerNormalized = ledgerInfo.ledger ? normalizeLedgerValue(ledgerInfo.ledger) : undefined;
         const ledgerDisplayName = ledgerInfo.ledger ? getLedgerDisplayName(ledgerInfo.ledger) : undefined;
         const explorerUrl = ledgerInfo.ledgerUrl;
-        
+
         return {
           ...bundle,
           ledger: ledgerInfo.ledger,
@@ -230,16 +230,16 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
           ledgerNormalized: ledgerNormalized
         };
       });
-      
+
       const batchResults = await Promise.all(batchPromises);
       enhancedBundles.push(...batchResults);
-      
+
       // Add a small delay between batches to be respectful to GitHub's API
       if (i + batchSize < options.length) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
-    
+
     return enhancedBundles;
   } catch (error) {
     throw new Error(`Failed to fetch Overlay Bundle List: ${error instanceof Error ? error.message : "Unknown error"}`);
@@ -323,7 +323,7 @@ export async function fetchOverlayBundleData(option: any, opts?: { includeTestDa
     const rawOverlayPromise = OverlayBundleFactory.fetchRawOverlayBundle(option.url);
 
 
-    const dataPromise = includeTestData 
+    const dataPromise = includeTestData
       ? OverlayBundleFactory.fetchOverlayBundleData(option.url)
       : Promise.resolve({} as Record<string, string>);
 
@@ -371,21 +371,21 @@ export async function fetchOverlayBundleData(option: any, opts?: { includeTestDa
             watermarkText = extractWatermarkFromObject(firstElement);
           }
         }
-        
+
       } catch (error) {
         console.error('Error extracting watermark from raw data:', error);
       }
     } else if (rawOverlayResult.status === 'rejected') {
       console.error('Failed to fetch raw overlay data:', rawOverlayResult.reason);
     }
-    
+
     // Also try to extract watermark from processed overlay if not found in raw data
     if (!watermarkText && overlay) {
       watermarkText = extractWatermarkFromObject(overlay);
     }
-    
-    
-    
+
+
+
 
     if (!overlay) {
       throw new Error(`Failed to fetch Overlay Bundle for ${option.id}: ${

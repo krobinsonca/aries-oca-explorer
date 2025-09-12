@@ -52,7 +52,7 @@ function BrandingInitializer({
         // Also check direct watermark field in the overlay (not just metadata)
         ov?.watermark,
       ];
-      
+
       for (const cand of cands) {
         if (cand === undefined || cand === null) continue;
         if (typeof cand === 'string') {
@@ -91,18 +91,18 @@ function BrandingInitializer({
           }
         }
       }
-      
+
       return undefined;
     };
 
     const extractedWatermark = extractWatermarkText(overlay);
     const resolvedWatermark = watermarkText || extractedWatermark;
 
-    
+
     // Only set watermark if we have valid content
-    const finalWatermark = (typeof resolvedWatermark === 'string' && resolvedWatermark.trim()) || 
-                          (typeof resolvedWatermark === 'object' && resolvedWatermark !== null && Object.values(resolvedWatermark).some(v => typeof v === 'string' && v.trim())) 
-                          ? resolvedWatermark 
+    const finalWatermark = (typeof resolvedWatermark === 'string' && resolvedWatermark.trim()) ||
+                          (typeof resolvedWatermark === 'object' && resolvedWatermark !== null && Object.values(resolvedWatermark).some(v => typeof v === 'string' && v.trim()))
+                          ? resolvedWatermark
                           : undefined;
 
     brandingDispatch({
@@ -204,8 +204,8 @@ function OverlayBundleViewContent({ option }: { option: any }) {
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 600 }}>
           {overlayData.overlay?.metadata?.name ? (
-            typeof overlayData.overlay.metadata.name === 'string' 
-              ? overlayData.overlay.metadata.name 
+            typeof overlayData.overlay.metadata.name === 'string'
+              ? overlayData.overlay.metadata.name
               : overlayData.overlay.metadata.name?.[language] || ''
           ) : ''}
           {overlayData.overlay?.metadata?.credentialHelpText && (
@@ -222,8 +222,8 @@ function OverlayBundleViewContent({ option }: { option: any }) {
 
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
           {overlayData.overlay?.metadata?.description ? (
-            typeof overlayData.overlay.metadata.description === 'string' 
-              ? overlayData.overlay.metadata.description 
+            typeof overlayData.overlay.metadata.description === 'string'
+              ? overlayData.overlay.metadata.description
               : overlayData.overlay.metadata.description?.[language] || ''
           ) : ''}
         </Typography>
@@ -248,16 +248,16 @@ function OverlayBundleViewContent({ option }: { option: any }) {
 
         {overlayData.overlay?.metadata?.issuerUrl && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Issuer URL: <a 
-              href={typeof overlayData.overlay.metadata.issuerUrl === 'string' 
-                ? overlayData.overlay.metadata.issuerUrl 
-                : overlayData.overlay.metadata.issuerUrl?.[language] || Object.values(overlayData.overlay.metadata.issuerUrl)[0] || ''} 
-              target="_blank" 
+            Issuer URL: <a
+              href={typeof overlayData.overlay.metadata.issuerUrl === 'string'
+                ? overlayData.overlay.metadata.issuerUrl
+                : overlayData.overlay.metadata.issuerUrl?.[language] || Object.values(overlayData.overlay.metadata.issuerUrl)[0] || ''}
+              target="_blank"
               rel="noopener noreferrer"
               style={{ color: '#1976d2', textDecoration: 'underline' }}
             >
-              {typeof overlayData.overlay.metadata.issuerUrl === 'string' 
-                ? overlayData.overlay.metadata.issuerUrl 
+              {typeof overlayData.overlay.metadata.issuerUrl === 'string'
+                ? overlayData.overlay.metadata.issuerUrl
                 : overlayData.overlay.metadata.issuerUrl?.[language] || Object.values(overlayData.overlay.metadata.issuerUrl)[0] || ''}
             </a>
           </Typography>
@@ -265,16 +265,16 @@ function OverlayBundleViewContent({ option }: { option: any }) {
 
         {overlayData.overlay?.metadata?.credentialSupportUrl && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Support URL: <a 
-              href={typeof overlayData.overlay.metadata.credentialSupportUrl === 'string' 
-                ? overlayData.overlay.metadata.credentialSupportUrl 
-                : overlayData.overlay.metadata.credentialSupportUrl?.[language] || Object.values(overlayData.overlay.metadata.credentialSupportUrl)[0] || ''} 
-              target="_blank" 
+            Support URL: <a
+              href={typeof overlayData.overlay.metadata.credentialSupportUrl === 'string'
+                ? overlayData.overlay.metadata.credentialSupportUrl
+                : overlayData.overlay.metadata.credentialSupportUrl?.[language] || Object.values(overlayData.overlay.metadata.credentialSupportUrl)[0] || ''}
+              target="_blank"
               rel="noopener noreferrer"
               style={{ color: '#1976d2', textDecoration: 'underline' }}
             >
-              {typeof overlayData.overlay.metadata.credentialSupportUrl === 'string' 
-                ? overlayData.overlay.metadata.credentialSupportUrl 
+              {typeof overlayData.overlay.metadata.credentialSupportUrl === 'string'
+                ? overlayData.overlay.metadata.credentialSupportUrl
                 : overlayData.overlay.metadata.credentialSupportUrl?.[language] || Object.values(overlayData.overlay.metadata.credentialSupportUrl)[0] || ''}
             </a>
           </Typography>

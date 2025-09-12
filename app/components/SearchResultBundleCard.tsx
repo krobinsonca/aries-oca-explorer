@@ -77,14 +77,14 @@ function BrandingInitializer({ overlay, watermarkText, overlayName }: BrandingIn
 
     const extractedWatermark = extractWatermarkText(overlay);
     let resolvedWatermark = watermarkText || extractedWatermark;
-    
+
     // Only use watermark if it exists and has valid content
     if (typeof resolvedWatermark === 'string' && (!resolvedWatermark || !resolvedWatermark.trim())) {
       resolvedWatermark = undefined;
     } else if (typeof resolvedWatermark === 'object' && !Object.values(resolvedWatermark).some(v => typeof v === 'string' && v.trim())) {
       resolvedWatermark = undefined;
     }
-    
+
 
 
     brandingDispatch({
@@ -164,7 +164,7 @@ export default function SearchResultBundleCard({ bundle, onClick }: SearchResult
         setError(null);
 
         const bundleData = await fetchOverlayBundleData(bundle, { includeTestData: true });
-        
+
         if (!isMounted) return;
 
         if (bundleData && bundleData.overlay) {
@@ -267,8 +267,8 @@ export default function SearchResultBundleCard({ bundle, onClick }: SearchResult
     >
       {overlay && mockRecord ? (
         <BrandingProvider>
-          <BrandingInitializer 
-            overlay={overlay} 
+          <BrandingInitializer
+            overlay={overlay}
             watermarkText={watermarkText}
             overlayName={bundle.name || bundle.id}
           />

@@ -133,7 +133,7 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
           OCA Bundle Explorer
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Explore and filter through available credential bundles. Search by name or description, 
+          Explore and filter through available credential bundles. Search by name or description,
           or filter by ledger network.
         </Typography>
 
@@ -334,11 +334,11 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
               id={`${ledger}-header`}
             >
               <Typography variant="h6" component="div">
-                {bundles[0]?.ledgerDisplayName || ledger || 'Unknown Ledger'} 
-                <Chip 
-                  label={bundles.length} 
-                  size="small" 
-                  sx={{ ml: 2 }} 
+                {bundles[0]?.ledgerDisplayName || ledger || 'Unknown Ledger'}
+                <Chip
+                  label={bundles.length}
+                  size="small"
+                  sx={{ ml: 2 }}
                   color="primary"
                 />
               </Typography>

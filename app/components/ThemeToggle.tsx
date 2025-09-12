@@ -14,7 +14,7 @@ export default function ThemeToggle() {
         onClick={toggleTheme}
         color="inherit"
         aria-label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
-        aria-pressed={mode === 'dark'}
+        aria-checked={mode === 'dark'}
         role="switch"
         sx={{
           ml: 1,

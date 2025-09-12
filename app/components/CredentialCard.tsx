@@ -189,7 +189,7 @@ function Attribute({
           styles={[
             styles?.normal ?? {},
             styles?.textContainer ?? {},
-            { 
+            {
               lineHeight: 24,
               color: styles?.textContainer?.color,
             } as CSSProperties,
@@ -378,7 +378,7 @@ function Card({
 
   return (
     <View style={styles?.cardContainer}>
-      
+
       {/* Watermark overlay */}
       {resolvedWatermark ? (
         <View
