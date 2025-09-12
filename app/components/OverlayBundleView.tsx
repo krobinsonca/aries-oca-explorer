@@ -173,7 +173,7 @@ function OverlayBundleViewContent({ option }: { option: any }) {
           ([name, value]) => new CredentialPreviewAttribute({ name, value })
         ),
       });
-      setOverlayData({ overlay, record, watermarkText });
+      setOverlayData({ overlay, record, watermarkText: typeof watermarkText === 'string' ? watermarkText : undefined });
     }
 
     fetchData();

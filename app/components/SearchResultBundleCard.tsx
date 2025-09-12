@@ -97,7 +97,7 @@ function BrandingInitializer({ overlay, watermarkText, overlayName }: BrandingIn
         secondaryBackgroundColor: overlay.branding.secondaryBackgroundColor ?? "",
         primaryAttribute: overlay.branding.primaryAttribute ?? "",
         secondaryAttribute: overlay.branding.secondaryAttribute ?? "",
-        watermarkText: finalWatermark,
+        watermarkText: resolvedWatermark,
       }
     });
   }, [overlay, watermarkText, overlayName, brandingDispatch]);
@@ -173,7 +173,7 @@ export default function SearchResultBundleCard({ bundle, onClick }: SearchResult
           const record = createCredentialRecord(bundleData.overlay, bundle, bundleData.data);
           setMockRecord(record);
           // Store watermark text for BrandingInitializer
-          setWatermarkText(bundleData.watermarkText);
+          setWatermarkText(typeof bundleData.watermarkText === 'string' ? bundleData.watermarkText : undefined);
           // Match details page language selection
           const selectedLang = (bundleData.overlay as any)?.languages?.[0] || 'en';
           setLanguage(selectedLang);
