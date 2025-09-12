@@ -4,6 +4,7 @@ const webpack = require('webpack');
 const nextConfig = {
     output: 'export',
     trailingSlash: true,
+    basePath: '/aries-oca-explorer',
     // https://nextjs.org/docs/api-reference/next.config.js/custom-webpack-config
     webpack: (config, { isServer }) => {
         config.resolve.alias['react-native$'] = 'react-native-web';
