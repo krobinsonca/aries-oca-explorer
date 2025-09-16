@@ -32,7 +32,6 @@ const nextConfig = {
             use: 'ignore-loader',
         });
 
-        
         // Handle problematic imports
         config.plugins.push(
             new webpack.IgnorePlugin({
