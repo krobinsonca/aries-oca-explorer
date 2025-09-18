@@ -9,9 +9,9 @@ interface GroupedIdDisplayProps {
   ledgerNormalized?: string;
 }
 
-export default function GroupedIdDisplay({ 
-  ids, 
-  showTitle = false, 
+export default function GroupedIdDisplay({
+  ids,
+  showTitle = false,
   title = "Associated Identifiers",
   ledgerNormalized
 }: GroupedIdDisplayProps) {
@@ -47,7 +47,7 @@ export default function GroupedIdDisplay({
           {title}
         </Typography>
       )}
-      
+
       {ids.length > 1 ? (
         <>
           {schemaIds.length > 0 && (
