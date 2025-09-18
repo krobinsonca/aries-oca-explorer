@@ -132,6 +132,95 @@ function getLedgerExplorerUrl(ledgerNormalized: string | undefined): string | un
   }
 }
 
+// Extract sequence number from credential definition ID
+// Format: DID:3:CL:SeqNo:SchemaName
+export function extractCredDefSeqNo(credDefId: string): string | undefined {
+  const match = credDefId.match(/:3:CL:(\d+):/);
+  return match ? match[1] : undefined;
+}
+
+// Extract sequence number from schema ID (requires credential definition ID)
+// Schema IDs don't contain seq numbers directly, but we can get it from the cred def
+export function extractSchemaSeqNo(schemaId: string, credDefIds: string[]): string | undefined {
+  // Find a credential definition ID that references this schema
+  const schemaName = schemaId.split(':')[2]; // Extract schema name from schema ID
+  console.log(`Looking for schema name "${schemaName}" in cred def IDs:`, credDefIds);
+  
+  // Try exact match first
+  const matchingCredDef = credDefIds.find(credDefId => credDefId.includes(`:${schemaName}`));
+  
+  if (matchingCredDef) {
+    console.log(`Found matching cred def for schema "${schemaName}": ${matchingCredDef}`);
+    return extractCredDefSeqNo(matchingCredDef);
+  } else {
+    console.log(`No matching cred def found for schema "${schemaName}"`);
+    return undefined;
+  }
+}
+
+// Alternative approach: extract sequence number directly from schema ID if it follows a pattern
+// Some schema IDs might have sequence numbers embedded
+export function extractSchemaSeqNoFromId(schemaId: string): string | undefined {
+  console.log(`Trying to extract seqNo directly from schema ID: ${schemaId}`);
+  
+  // Try to extract sequence number from schema ID pattern
+  // This might work for some ledger implementations
+  const parts = schemaId.split(':');
+  console.log(`Schema ID parts:`, parts);
+  
+  if (parts.length >= 4) {
+    // Check if the last part before version is a number
+    const potentialSeqNo = parts[parts.length - 2];
+    console.log(`Potential seqNo from schema ID: ${potentialSeqNo}`);
+    if (/^\d+$/.test(potentialSeqNo)) {
+      console.log(`Found seqNo in schema ID: ${potentialSeqNo}`);
+      return potentialSeqNo;
+    }
+  }
+  
+  // Try a different approach - look for any numeric part in the schema ID
+  for (let i = 0; i < parts.length; i++) {
+    if (/^\d+$/.test(parts[i])) {
+      console.log(`Found numeric part in schema ID at position ${i}: ${parts[i]}`);
+      return parts[i];
+    }
+  }
+  
+  console.log(`No seqNo found in schema ID`);
+  return undefined;
+}
+
+// Construct transaction explorer URL for a given ID
+export function constructExplorerUrl(
+  id: string, 
+  ledgerNormalized: string | undefined, 
+  allIds: string[]
+): string | undefined {
+  if (!ledgerNormalized) return undefined;
+
+  const baseUrl = getLedgerExplorerUrl(ledgerNormalized);
+  if (!baseUrl) return undefined;
+
+  // Get the base URL without the /home path for transaction URLs
+  const explorerRoot = baseUrl.replace('/home/CANDY_PROD', '').replace('/home/CANDY_DEV', '').replace('/home/CANDY_TEST', '');
+
+  // Convert ledger normalized value to the correct network format for URLs
+  const networkName = ledgerNormalized.toUpperCase().replace('-', '_');
+
+  if (id.includes(':3:CL:')) {
+    // Credential Definition ID - extract sequence number
+    const seqNo = extractCredDefSeqNo(id);
+    if (seqNo) {
+      return `${explorerRoot}/tx/${networkName}/domain/${seqNo}`;
+    }
+  } else {
+    // Schema ID - no hyperlink for now
+    return undefined;
+  }
+
+  return undefined;
+}
+
 // Extract ledger information from README content
 export function extractLedgerFromReadme(readmeContent: string): { ledger?: string; ledgerUrl?: string } {
   const lines = readmeContent.split("\n");
