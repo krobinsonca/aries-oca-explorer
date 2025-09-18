@@ -122,11 +122,9 @@ function IssuerName({
 
 function CredentialName({
   name,
-  credentialId,
   styles,
 }: {
   name?: string;
-  credentialId?: string;
   styles?: Record<string, CSSProperties>;
 }) {
   return (
@@ -147,23 +145,6 @@ function CredentialName({
       >
         {name}
       </Text>
-      {credentialId && (
-        <Text
-          style={[
-            styles?.labelSubtitle,
-            styles?.textContainer,
-            {
-              fontSize: 12,
-              opacity: 0.6,
-              marginTop: 2,
-              color: styles?.textContainer?.color,
-            },
-          ]}
-          numberOfLines={1}
-        >
-          ID: {credentialId}
-        </Text>
-      )}
     </View>
   );
 }
@@ -300,7 +281,6 @@ function CardPrimaryBody({
   overlay,
   language,
   credential,
-  credentialId,
   primaryAttribute,
   secondaryAttribute,
   styles,
@@ -308,7 +288,6 @@ function CardPrimaryBody({
   overlay?: OverlayBundle;
   language?: string;
   credential?: LocalizedCredential;
-  credentialId?: string;
   primaryAttribute?: DisplayAttribute;
   secondaryAttribute?: DisplayAttribute;
   styles?: Record<string, CSSProperties>;
@@ -327,7 +306,7 @@ function CardPrimaryBody({
   return (
     <View style={styles?.primaryBodyContainer}>
       <IssuerName issuer={issuerText} styles={styles} />
-      <CredentialName name={nameText} credentialId={credentialId} styles={styles} />
+      <CredentialName name={nameText} styles={styles} />
       {displayAttributes.map((attribute, index) => (
         <Attribute
           key={`${attribute.name}_${index}`}
@@ -346,13 +325,11 @@ function CardStatus({ styles }: { styles?: Record<string, CSSProperties> }) {
 function Card({
   overlay,
   credential,
-  credentialId,
   language,
   styles,
 }: {
   overlay?: OverlayBundle;
   credential?: LocalizedCredential;
-  credentialId?: string;
   language?: string;
   styles?: Record<string, CSSProperties>;
 }) {
@@ -454,7 +431,6 @@ function Card({
         overlay={overlay}
         language={language}
         credential={credential}
-        credentialId={credentialId}
         primaryAttribute={primaryAttribute}
         secondaryAttribute={secondaryAttribute}
         styles={styles}
@@ -467,12 +443,10 @@ function Card({
 function CredentialCard({
   overlay,
   record,
-  bundleId,
   language,
 }: {
   overlay?: OverlayBundle;
   record?: CredentialExchangeRecord;
-  bundleId?: string;
   language?: string;
 }) {
   const branding = useBranding();
@@ -494,7 +468,6 @@ function CredentialCard({
       <Card
         overlay={overlay}
         credential={localizedCredential}
-        credentialId={bundleId}
         language={language}
         styles={styles}
       />

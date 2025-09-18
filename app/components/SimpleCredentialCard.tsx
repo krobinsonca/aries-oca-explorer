@@ -231,7 +231,140 @@ function SimpleCredentialCardContent({ bundle, onClick, language = 'en' }: Simpl
       }}
       onClick={onClick}
     >
-      <CredentialCard overlay={overlay || undefined} record={mockRecord || undefined} bundleId={bundle.id} language={language} />
+      <CredentialCard overlay={overlay || undefined} record={mockRecord || undefined} language={language} />
+      {/* All IDs below the card */}
+      <Box
+        sx={{
+          mt: 1.5,
+          p: 1.5,
+          backgroundColor: '#f8f9fa',
+          borderRadius: 2,
+          border: '1px solid #e9ecef',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+        }}
+      >
+        {bundle.ids && bundle.ids.length > 1 ? (
+          (() => {
+            // Group IDs by type
+            const schemaIds = bundle.ids.filter(id => !id.includes(':3:CL:'));
+            const credDefIds = bundle.ids.filter(id => id.includes(':3:CL:'));
+            
+            return (
+              <>
+                {schemaIds.length > 0 && (
+                  <Box sx={{ mb: credDefIds.length > 0 ? 2 : 0 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontSize: '9px',
+                        fontWeight: 600,
+                        color: '#6c757d',
+                        display: 'block',
+                        mb: 1,
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {schemaIds.length > 1 ? 'Schema IDs' : 'Schema ID'}
+                    </Typography>
+                    {schemaIds.map((id, index) => (
+                      <Typography
+                        key={index}
+                        variant="caption"
+                        sx={{
+                          fontSize: '10px',
+                          fontFamily: 'monospace',
+                          color: '#212529',
+                          wordBreak: 'break-all',
+                          lineHeight: 1.4,
+                          backgroundColor: '#ffffff',
+                          padding: '6px 8px',
+                          borderRadius: 1,
+                          border: '1px solid #dee2e6',
+                          display: 'block',
+                          mb: index < schemaIds.length - 1 ? 1 : 0,
+                        }}
+                      >
+                        {id}
+                      </Typography>
+                    ))}
+                  </Box>
+                )}
+                {credDefIds.length > 0 && (
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontSize: '9px',
+                        fontWeight: 600,
+                        color: '#6c757d',
+                        display: 'block',
+                        mb: 1,
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {credDefIds.length > 1 ? 'Credential Definition IDs' : 'Credential Definition ID'}
+                    </Typography>
+                    {credDefIds.map((id, index) => (
+                      <Typography
+                        key={index}
+                        variant="caption"
+                        sx={{
+                          fontSize: '10px',
+                          fontFamily: 'monospace',
+                          color: '#212529',
+                          wordBreak: 'break-all',
+                          lineHeight: 1.4,
+                          backgroundColor: '#ffffff',
+                          padding: '6px 8px',
+                          borderRadius: 1,
+                          border: '1px solid #dee2e6',
+                          display: 'block',
+                          mb: index < credDefIds.length - 1 ? 1 : 0,
+                        }}
+                      >
+                        {id}
+                      </Typography>
+                    ))}
+                  </Box>
+                )}
+              </>
+            );
+          })()
+        ) : (
+          <>
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: '9px',
+                fontWeight: 600,
+                color: '#6c757d',
+                display: 'block',
+                mb: 1,
+                textTransform: 'uppercase',
+              }}
+            >
+              {bundle.id.includes(':3:CL:') ? 'Credential Definition ID' : 'Schema ID'}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: '10px',
+                fontFamily: 'monospace',
+                color: '#212529',
+                wordBreak: 'break-all',
+                lineHeight: 1.4,
+                backgroundColor: '#ffffff',
+                padding: '6px 8px',
+                borderRadius: 1,
+                border: '1px solid #dee2e6',
+                display: 'block',
+              }}
+            >
+              {bundle.id}
+            </Typography>
+          </>
+        )}
+      </Box>
     </Box>
   );
 }
