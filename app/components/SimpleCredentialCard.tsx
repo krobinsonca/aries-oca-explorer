@@ -231,7 +231,7 @@ function SimpleCredentialCardContent({ bundle, onClick, language = 'en' }: Simpl
       }}
       onClick={onClick}
     >
-      <CredentialCard overlay={overlay || undefined} record={mockRecord || undefined} language={language} />
+      <CredentialCard overlay={overlay || undefined} record={mockRecord || undefined} bundleId={bundle.id} language={language} />
     </Box>
   );
 }
