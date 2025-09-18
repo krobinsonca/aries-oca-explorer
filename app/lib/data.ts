@@ -7,6 +7,7 @@ export const GITHUB_RAW_URL = "https://raw.githubusercontent.com/bcgov/aries-oca
 // Interface for OCA bundle with ledger information
 export interface BundleWithLedger {
   id: string;
+  ids: string[]; // All IDs associated with this OCA bundle (schema + credential definition)
   org: string;
   name: string;
   desc: string;
@@ -206,13 +207,31 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
     const body = await response.text();
     const options: any[] = JSON.parse(body);
 
+    // Group bundles by ocabundle path and collect all IDs for each unique OCA bundle
+    const bundleGroups = options.reduce((acc, bundle) => {
+      const existing = acc.find(b => b.ocabundle === bundle.ocabundle);
+      if (existing) {
+        // Add this ID to the existing bundle's IDs array
+        existing.ids.push(bundle.id);
+      } else {
+        // Create new bundle with IDs array
+        acc.push({
+          ...bundle,
+          ids: [bundle.id]
+        });
+      }
+      return acc;
+    }, [] as any[]);
+
+    console.log(`Deduplication: ${options.length} -> ${bundleGroups.length} unique OCA bundles`);
+
     // Enhance OCA bundles with ledger information
     const enhancedBundles: BundleWithLedger[] = [];
 
     // Process in batches to avoid overwhelming the GitHub API
     const batchSize = 5;
-    for (let i = 0; i < options.length; i += batchSize) {
-      const batch = options.slice(i, i + batchSize);
+    for (let i = 0; i < bundleGroups.length; i += batchSize) {
+      const batch = bundleGroups.slice(i, i + batchSize);
 
       const batchPromises = batch.map(async (bundle): Promise<BundleWithLedger> => {
         const ledgerInfo = await fetchSchemaReadme(bundle.ocabundle);
@@ -235,7 +254,7 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
       enhancedBundles.push(...batchResults);
 
       // Add a small delay between batches to be respectful to GitHub's API
-      if (i + batchSize < options.length) {
+      if (i + batchSize < bundleGroups.length) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
     }
