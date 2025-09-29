@@ -8,6 +8,7 @@ import { fetchOverlayBundleData } from '@/app/lib/data';
 import CredentialCard from './CredentialCard';
 import { BundleWithLedger } from '@/app/lib/data';
 import { BrandingProvider, useBrandingDispatch, ActionType } from '@/app/contexts/Branding';
+import GroupedIdDisplay from './GroupedIdDisplay';
 
 interface SimpleCredentialCardProps {
   bundle: BundleWithLedger;
@@ -232,6 +233,8 @@ function SimpleCredentialCardContent({ bundle, onClick, language = 'en' }: Simpl
       onClick={onClick}
     >
       <CredentialCard overlay={overlay || undefined} record={mockRecord || undefined} language={language} />
+      {/* All IDs below the card */}
+      <GroupedIdDisplay ids={bundle.ids || [bundle.id]} ledgerNormalized={bundle.ledgerNormalized} />
     </Box>
   );
 }

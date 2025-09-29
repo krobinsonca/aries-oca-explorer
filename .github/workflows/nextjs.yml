@@ -60,8 +60,8 @@ jobs:
           # Automatically inject basePath in your Next.js configuration file and disable
           # server side image optimization (https://nextjs.org/docs/api-reference/next/image#unoptimized).
           #
-          # You may remove this line if you want to manage the configuration yourself.
-          static_site_generator: next
+          # Only inject basePath for non-main repos (forks need basePath, main repo doesn't)
+          static_site_generator: ${{ github.repository != 'bcgov/aries-oca-explorer' && 'next' || null }}
       - name: Restore cache
         uses: actions/cache@v4
         with:

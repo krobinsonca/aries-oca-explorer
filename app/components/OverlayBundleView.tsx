@@ -21,6 +21,7 @@ import { BrandingProvider, useBrandingDispatch, ActionType } from "@/app/context
 import CredentialCard from "@/app/components/CredentialCard";
 import CredentialDetail from "@/app/components/CredentialDetail";
 import OverlayBrandingForm from "@/app/components/BrandingOverlayForm";
+import GroupedIdDisplay from "@/app/components/GroupedIdDisplay";
 import { OverlayBundle } from "@hyperledger/aries-oca";
 import { Info } from "@mui/icons-material";
 import { CredentialExchangeRecord, CredentialPreviewAttribute, CredentialState } from "@aries-framework/core";
@@ -342,6 +343,16 @@ function OverlayBundleViewContent({ option }: { option: any }) {
               })()}
             </Box>
           </Paper>
+
+          {/* Schema and Credential Definition IDs */}
+          {option?.ids && option.ids.length > 0 && (
+            <Paper elevation={1} sx={{ p: 3, mb: 4 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, mb: 2 }}>
+                Associated Identifiers
+              </Typography>
+              <GroupedIdDisplay ids={option.ids} ledgerNormalized={option.ledgerNormalized} />
+            </Paper>
+          )}
 
           {/* Branding Configuration */}
           <Paper elevation={1} sx={{ p: 3 }}>
