@@ -145,10 +145,10 @@ export function extractSchemaSeqNo(schemaId: string, credDefIds: string[]): stri
   // Find a credential definition ID that references this schema
   const schemaName = schemaId.split(':')[2]; // Extract schema name from schema ID
   console.log(`Looking for schema name "${schemaName}" in cred def IDs:`, credDefIds);
-  
+
   // Try exact match first
   const matchingCredDef = credDefIds.find(credDefId => credDefId.includes(`:${schemaName}`));
-  
+
   if (matchingCredDef) {
     console.log(`Found matching cred def for schema "${schemaName}": ${matchingCredDef}`);
     return extractCredDefSeqNo(matchingCredDef);
@@ -162,12 +162,12 @@ export function extractSchemaSeqNo(schemaId: string, credDefIds: string[]): stri
 // Some schema IDs might have sequence numbers embedded
 export function extractSchemaSeqNoFromId(schemaId: string): string | undefined {
   console.log(`Trying to extract seqNo directly from schema ID: ${schemaId}`);
-  
+
   // Try to extract sequence number from schema ID pattern
   // This might work for some ledger implementations
   const parts = schemaId.split(':');
   console.log(`Schema ID parts:`, parts);
-  
+
   if (parts.length >= 4) {
     // Check if the last part before version is a number
     const potentialSeqNo = parts[parts.length - 2];
@@ -177,7 +177,7 @@ export function extractSchemaSeqNoFromId(schemaId: string): string | undefined {
       return potentialSeqNo;
     }
   }
-  
+
   // Try a different approach - look for any numeric part in the schema ID
   for (let i = 0; i < parts.length; i++) {
     if (/^\d+$/.test(parts[i])) {
@@ -185,15 +185,15 @@ export function extractSchemaSeqNoFromId(schemaId: string): string | undefined {
       return parts[i];
     }
   }
-  
+
   console.log(`No seqNo found in schema ID`);
   return undefined;
 }
 
 // Construct transaction explorer URL for a given ID
 export function constructExplorerUrl(
-  id: string, 
-  ledgerNormalized: string | undefined, 
+  id: string,
+  ledgerNormalized: string | undefined,
   allIds: string[]
 ): string | undefined {
   if (!ledgerNormalized) return undefined;
@@ -298,7 +298,7 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
 
     // Group bundles by ocabundle path and collect all IDs for each unique OCA bundle
     const bundleGroups = options.reduce((acc, bundle) => {
-      const existing = acc.find(b => b.ocabundle === bundle.ocabundle);
+      const existing = acc.find((b: any) => b.ocabundle === bundle.ocabundle);
       if (existing) {
         // Add this ID to the existing bundle's IDs array
         existing.ids.push(bundle.id);
@@ -322,7 +322,7 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
     for (let i = 0; i < bundleGroups.length; i += batchSize) {
       const batch = bundleGroups.slice(i, i + batchSize);
 
-      const batchPromises = batch.map(async (bundle): Promise<BundleWithLedger> => {
+      const batchPromises = batch.map(async (bundle: any): Promise<BundleWithLedger> => {
         const ledgerInfo = await fetchSchemaReadme(bundle.ocabundle);
 
         // Normalize ledger value and create display name
