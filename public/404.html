@@ -8,7 +8,8 @@
         // This is a catch-all 404 page for GitHub Pages
         // It will try to load the actual page by making a request to the Next.js app
         const path = window.location.pathname;
-        const basePath = '/aries-oca-explorer';
+        // Extract basePath from current URL (works for both fork and main repo)
+        const basePath = path.split('/').slice(0, 2).join('/') || '/aries-oca-explorer';
         
         // Try to load the page through the Next.js app
         fetch(basePath + '/api/rewrite?path=' + encodeURIComponent(path))
