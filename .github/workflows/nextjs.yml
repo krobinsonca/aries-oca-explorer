@@ -77,6 +77,8 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
       - name: Add .nojekyll file
         run: touch ./out/.nojekyll
+      - name: List generated files for debugging
+        run: find ./out -type f -name "*.html" | head -20
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
