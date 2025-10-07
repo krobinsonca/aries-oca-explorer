@@ -1,14 +1,9 @@
 import OverlayBundleFactory from "@/app/services/OverlayBundleFactory";
 
-// Use environment-appropriate URLs
-const isProduction = process.env.NODE_ENV === 'production';
-export const BUNDLE_LIST_URL = isProduction
-  ? "https://bcgov.github.io/aries-oca-bundles"
-  : "https://bcgov.github.io/aries-oca-bundles";
+// Data source URLs
+export const BUNDLE_LIST_URL = "https://bcgov.github.io/aries-oca-bundles";
 export const BUNDLE_LIST_FILE = "ocabundleslist.json";
-export const GITHUB_RAW_URL = isProduction
-  ? "https://raw.githubusercontent.com/bcgov/aries-oca-bundles/main"
-  : "https://raw.githubusercontent.com/bcgov/aries-oca-bundles/main";
+export const GITHUB_RAW_URL = "https://raw.githubusercontent.com/bcgov/aries-oca-bundles/main";
 
 // Interface for OCA bundle with ledger information
 export interface BundleWithLedger {
