@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Aries OCA Explorer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+        // This is a catch-all 404 page for GitHub Pages
+        // It will try to load the actual page by making a request to the Next.js app
+        const path = window.location.pathname;
+        // Extract basePath from current URL (works for both fork and main repo)
+        const basePath = path.split('/').slice(0, 2).join('/') || '/aries-oca-explorer';
+        
+        // Try to load the page through the Next.js app
+        fetch(basePath + '/api/rewrite?path=' + encodeURIComponent(path))
+            .then(response => {
+                if (response.ok) {
+                    // If the page exists, redirect to it
+                    window.location.href = path;
+                } else {
+                    // If not, go to the main page
+                    window.location.href = basePath + '/';
+                }
+            })
+            .catch(() => {
+                // If there's an error, go to the main page
+                window.location.href = basePath + '/';
+            });
+    </script>
+</head>
+<body>
+    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+        <h1>Aries OCA Explorer</h1>
+        <p>Loading...</p>
+    </div>
+</body>
+</html>
