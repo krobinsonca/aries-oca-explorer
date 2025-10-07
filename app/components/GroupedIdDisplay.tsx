@@ -47,6 +47,7 @@ export default function GroupedIdDisplay({
           {title}
         </Typography>
       )}
+
       {ids.length > 1 ? (
         <>
           {schemaIds.length > 0 && (
