@@ -154,6 +154,7 @@ export function extractSchemaSeqNo(schemaId: string, credDefIds: string[]): stri
 
   // Try exact match first
   const matchingCredDef = credDefIds.find(credDefId => credDefId.includes(`:${schemaName}`));
+
   if (matchingCredDef) {
     console.log(`Found matching cred def for schema "${schemaName}": ${matchingCredDef}`);
     return extractCredDefSeqNo(matchingCredDef);
@@ -172,6 +173,7 @@ export function extractSchemaSeqNoFromId(schemaId: string): string | undefined {
   // This might work for some ledger implementations
   const parts = schemaId.split(':');
   console.log(`Schema ID parts:`, parts);
+
   if (parts.length >= 4) {
     // Check if the last part before version is a number
     const potentialSeqNo = parts[parts.length - 2];
@@ -189,6 +191,7 @@ export function extractSchemaSeqNoFromId(schemaId: string): string | undefined {
       return parts[i];
     }
   }
+
   console.log(`No seqNo found in schema ID`);
   return undefined;
 }
