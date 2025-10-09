@@ -37,50 +37,29 @@ export interface BundleFilters {
 // Cache for README content to avoid repeated fetches
 const readmeCache = new Map<string, { ledger?: string; ledgerUrl?: string }>();
 
-// Ledger normalization mapping
-// Maps various formats to consistent internal values
-const LEDGER_NORMALIZATION_MAP: Record<string, string> = {
-  // Candy ledger variations
-  'candy:prod': 'candy-prod',
-  'candy:dev': 'candy-dev',
-  'candy:test': 'candy-test',
-  'CANDY:PROD': 'candy-prod',
-  'CANDY:DEV': 'candy-dev',
-  'CANDY:TEST': 'candy-test',
-  'CANDY-Prod': 'candy-prod',
-  'CANDY-Dev': 'candy-dev',
-  'CANDY-Test': 'candy-test',
-  'Candy:Prod': 'candy-prod',
-  'Candy:Dev': 'candy-dev',
-  'Candy:Test': 'candy-test',
-
-  // BCovrin ledger variations
-  'bcovrin:test': 'bcovrin-test',
-  'bcovrin:prod': 'bcovrin-prod',
-  'BCOVRIN:TEST': 'bcovrin-test',
-  'BCOVRIN:PROD': 'bcovrin-prod',
-  'BCOVRIN-Test': 'bcovrin-test',
-  'BCOVRIN-Prod': 'bcovrin-prod',
-  'Bcovrin:Test': 'bcovrin-test',
-  'Bcovrin:Prod': 'bcovrin-prod',
-
-  // Other common variations
-  'mainnet': 'mainnet',
-  'testnet': 'testnet',
-  'devnet': 'devnet',
-  'MAINNET': 'mainnet',
-  'TESTNET': 'testnet',
-  'DEVNET': 'devnet',
-
-  // Legacy mappings
-  'localhost:test': 'localhost-test',
-  'local:test': 'localhost-test',
-};
-
 // Normalize ledger value for consistent filtering
 export function normalizeLedgerValue(ledger: string | undefined): string {
   if (!ledger) return "unknown";
-  const normalized = LEDGER_NORMALIZATION_MAP[ledger] || ledger.toLowerCase().replace(/[^a-z0-9]/g, "-");
+
+  // Convert to lowercase first
+  let normalized = ledger.toLowerCase();
+
+  // Handle special legacy cases that don't follow standard patterns
+  const specialCases: Record<string, string> = {
+    'local:test': 'localhost-test',
+    'localhost:test': 'localhost-test',
+  };
+
+  if (specialCases[normalized]) {
+    return specialCases[normalized];
+  }
+
+  // Apply fallback logic: replace non-alphanumeric with hyphens
+  normalized = normalized.replace(/[^a-z0-9]/g, '-');
+
+  // Clean up multiple consecutive hyphens and leading/trailing hyphens
+  normalized = normalized.replace(/-+/g, '-').replace(/^-+|-+$/g, '');
+
   return normalized;
 }
 
@@ -128,6 +107,8 @@ function getLedgerExplorerUrl(ledgerNormalized: string | undefined): string | un
       return "https://candyscan.idlab.org/home/CANDY_DEV";
     case "candy-test":
       return "https://candyscan.idlab.org/home/CANDY_TEST";
+    case "bcovrin-test":
+      return "https://indyscan.bcovrin.vonx.io/home/BCOVRIN_TEST";
     default:
       return undefined;
   }
@@ -199,11 +180,11 @@ export function constructExplorerUrl(
   const baseUrl = getLedgerExplorerUrl(ledgerNormalized);
   if (!baseUrl) return undefined;
 
-  // Get the base URL without the /home path for transaction URLs
-  const explorerRoot = baseUrl.replace('/home/CANDY_PROD', '').replace('/home/CANDY_DEV', '').replace('/home/CANDY_TEST', '');
+  // Extract the explorer root by removing the /home/<network> path
+  const explorerRoot = baseUrl.replace(/\/home\/[^/]+$/, '');
 
   // Convert ledger normalized value to the correct network format for URLs
-  const networkName = ledgerNormalized.toUpperCase().replace('-', '_');
+  const networkName = ledgerNormalized.toUpperCase().replace(/-/g, '_');
 
   if (id.includes(':3:CL:')) {
     // Credential Definition ID - extract sequence number
