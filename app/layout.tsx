@@ -7,6 +7,7 @@ import { LanguageProvider } from '@/app/contexts/Language';
 import ThemeWrapper from '@/app/components/ThemeWrapper';
 import ThemeClassProvider from '@/app/components/ThemeClassProvider';
 import Header from '@/app/components/Header';
+import { bcSans } from '@/app/fonts';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -21,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={bcSans.variable}>
       <body className={inter.className}>
         {/* Skip link for keyboard navigation */}
         <a href="#main-content" className="skip-link">
