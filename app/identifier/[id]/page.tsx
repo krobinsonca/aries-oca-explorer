@@ -33,7 +33,8 @@ export async function generateStaticParams() {
       if (options.length > 0) {
         // Combine API results with known IDs to ensure coverage
         const apiIds = options.map((option) => option.id);
-        const allIds = [...new Set([...KNOWN_CREDENTIAL_IDS, ...apiIds])];
+        const allIdsSet = new Set([...KNOWN_CREDENTIAL_IDS, ...apiIds]);
+        const allIds = Array.from(allIdsSet);
         console.log(`generateStaticParams: Generating ${allIds.length} total pages`);
 
         return allIds.map((id) => ({
