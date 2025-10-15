@@ -30,8 +30,15 @@ export async function generateStaticParams() {
 
 export default async function Page({ params }: { params: { id: string } }) {
   const id = decodeURIComponent(params.id);
-  const options: any[] = await fetchOverlayBundleList();
-  const option = options.find((option) => option.id === id);
+
+  // Fetch simple bundle list without ledger info to avoid timeout during static generation
+  const response = await fetch(`${BUNDLE_LIST_URL}/${BUNDLE_LIST_FILE}`);
+  if (!response.ok) {
+    notFound();
+  }
+
+  const options: any[] = await response.json();
+  const option = options.find((opt: any) => opt.id === id);
 
   if (!option) {
     notFound();
