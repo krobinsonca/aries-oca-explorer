@@ -7,7 +7,7 @@
   font-family: 'BC Sans', 'Noto Sans', 'Verdana', 'Arial', sans-serif;
 }
 
-/* BC Sans Font Faces - Updated for basePath compatibility */
+/* BC Sans Font Faces - Conditional paths for dev vs production */
 @font-face {
   font-family: 'BC Sans';
   src: url('/fonts/BCSans-Regular.woff2') format('woff2'),

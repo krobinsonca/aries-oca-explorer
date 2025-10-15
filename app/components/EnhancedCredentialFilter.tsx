@@ -28,7 +28,7 @@ import {
   filterBundles,
   BundleWithLedger
 } from '@/app/lib/data';
-import SimpleCredentialCard from './SimpleCredentialCard';
+import SearchResultBundleCard from './SearchResultBundleCard';
 import { useLanguage } from '@/app/contexts/Language';
 
 interface EnhancedCredentialFilterProps {
@@ -348,10 +348,9 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
               <Grid container spacing={3}>
                 {bundles.map((bundle) => (
                   <Grid item xs={12} sm={6} md={4} lg={4} xl={3} key={bundle.id}>
-                    <SimpleCredentialCard
+                    <SearchResultBundleCard
                       bundle={bundle}
                       onClick={() => handleBundleSelect(bundle)}
-                      language={language}
                     />
                   </Grid>
                 ))}
