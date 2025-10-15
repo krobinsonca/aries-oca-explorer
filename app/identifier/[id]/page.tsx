@@ -3,47 +3,55 @@ import OverlayBundleView from "@/app/components/OverlayBundleView";
 import { fetchOverlayBundleList, BUNDLE_LIST_URL, BUNDLE_LIST_FILE } from "@/app/lib/data";
 import { notFound } from "next/navigation";
 
+// Pre-defined list of known credential IDs for static generation
+const KNOWN_CREDENTIAL_IDS = [
+  // From the failing URLs you reported
+  '4WW6792ksq62UroZyfd6nQ:3:CL:1098:SpecialEventServer:1',
+  'RGjWbW1eycP7FrMf4QJvX8:3:CL:13:Person',
+  // Real credential IDs from the API
+  'YWnESLB4SH275SMNvaJJ1L:2:Rental Property Business Licence:1.0',
+  'YWnESLB4SH275SMNvaJJ1L:3:CL:38195:Rental Property Business Licence',
+  'R12pguaP3VF2WiE6vAsiPF:2:Rental Property Business Licence:1.0',
+  'R12pguaP3VF2WiE6vAsiPF:3:CL:4574:Rental Property Business Licence',
+  'ARK5s3QZtjL5X65mLoubdk:2:Rental Property Business Licence:1.0',
+];
+
 export async function generateStaticParams() {
-  // Simplified fetch for static generation - only get IDs, skip ledger info
+  console.log('generateStaticParams: Starting static generation...');
+  
   try {
-    console.log('generateStaticParams: Starting bundle list fetch...');
+    // First try to fetch from API
+    console.log('generateStaticParams: Attempting to fetch bundle list...');
     const response = await fetch(`${BUNDLE_LIST_URL}/${BUNDLE_LIST_FILE}`, {
-      // Add timeout to prevent hanging
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(15000), // Reduced timeout
     });
 
-    if (!response.ok) {
-      console.error(`Failed to fetch bundle list for static generation: ${response.status}`);
-      // Return a fallback set of common credential IDs to ensure some pages are generated
-      return [
-        { id: encodeURIComponent('4WW6792ksq62UroZyfd6nQ:3:CL:1098:SpecialEventServer:1') },
-        { id: encodeURIComponent('RGjWbW1eycP7FrMf4QJvX8:3:CL:13:Person') }
-      ];
+    if (response.ok) {
+      const options: any[] = await response.json();
+      console.log(`generateStaticParams: Successfully fetched ${options.length} bundles from API`);
+      
+      if (options.length > 0) {
+        // Combine API results with known IDs to ensure coverage
+        const apiIds = options.map((option) => option.id);
+        const allIds = [...new Set([...KNOWN_CREDENTIAL_IDS, ...apiIds])];
+        console.log(`generateStaticParams: Generating ${allIds.length} total pages`);
+        
+        return allIds.map((id) => ({
+          id: encodeURIComponent(id)
+        }));
+      }
     }
-
-    const options: any[] = await response.json();
-    console.log(`generateStaticParams: Processing ${options.length} bundles`);
-
-    if (options.length === 0) {
-      console.warn('generateStaticParams: No bundles found, returning fallback IDs');
-      return [
-        { id: encodeURIComponent('4WW6792ksq62UroZyfd6nQ:3:CL:1098:SpecialEventServer:1') },
-        { id: encodeURIComponent('RGjWbW1eycP7FrMf4QJvX8:3:CL:13:Person') }
-      ];
-    }
-
-    return options.map((option) => ({
-      id: encodeURIComponent(option.id)
-    }));
+    
+    console.warn('generateStaticParams: API fetch failed or returned empty, using known IDs');
   } catch (error) {
-    console.error('Error in generateStaticParams:', error);
-    // Return fallback IDs to ensure some pages are generated even if fetch fails
-    console.log('generateStaticParams: Using fallback IDs due to error');
-    return [
-      { id: encodeURIComponent('4WW6792ksq62UroZyfd6nQ:3:CL:1098:SpecialEventServer:1') },
-      { id: encodeURIComponent('RGjWbW1eycP7FrMf4QJvX8:3:CL:13:Person') }
-    ];
+    console.error('generateStaticParams: API fetch error:', error);
   }
+  
+  // Fallback to known IDs
+  console.log(`generateStaticParams: Using ${KNOWN_CREDENTIAL_IDS.length} known credential IDs`);
+  return KNOWN_CREDENTIAL_IDS.map((id) => ({
+    id: encodeURIComponent(id)
+  }));
 }
 
 export default async function Page({ params }: { params: { id: string } }) {
