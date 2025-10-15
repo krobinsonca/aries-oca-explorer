@@ -18,7 +18,7 @@ const KNOWN_CREDENTIAL_IDS = [
 
 export async function generateStaticParams() {
   console.log('generateStaticParams: Starting static generation...');
-  
+
   try {
     // First try to fetch from API
     console.log('generateStaticParams: Attempting to fetch bundle list...');
@@ -29,24 +29,24 @@ export async function generateStaticParams() {
     if (response.ok) {
       const options: any[] = await response.json();
       console.log(`generateStaticParams: Successfully fetched ${options.length} bundles from API`);
-      
+
       if (options.length > 0) {
         // Combine API results with known IDs to ensure coverage
         const apiIds = options.map((option) => option.id);
         const allIds = [...new Set([...KNOWN_CREDENTIAL_IDS, ...apiIds])];
         console.log(`generateStaticParams: Generating ${allIds.length} total pages`);
-        
+
         return allIds.map((id) => ({
           id: encodeURIComponent(id)
         }));
       }
     }
-    
+
     console.warn('generateStaticParams: API fetch failed or returned empty, using known IDs');
   } catch (error) {
     console.error('generateStaticParams: API fetch error:', error);
   }
-  
+
   // Fallback to known IDs
   console.log(`generateStaticParams: Using ${KNOWN_CREDENTIAL_IDS.length} known credential IDs`);
   return KNOWN_CREDENTIAL_IDS.map((id) => ({
