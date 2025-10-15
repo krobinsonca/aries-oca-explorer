@@ -7,12 +7,12 @@ export default function NotFound() {
     <>
       <Header />
       <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-        <Box 
-          display="flex" 
-          flexDirection="column" 
-          alignItems="center" 
-          justifyContent="center" 
-          minHeight="50vh" 
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          minHeight="50vh"
           gap={3}
           textAlign="center"
         >
@@ -23,8 +23,8 @@ export default function NotFound() {
             Credential Not Found
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 600 }}>
-            The credential you're looking for doesn't exist or may have been removed. 
-            This could happen if the credential ID has changed or if there was an issue 
+            The credential you&apos;re looking for doesn&apos;t exist or may have been removed.
+            This could happen if the credential ID has changed or if there was an issue
             loading the credential data.
           </Typography>
           <Box sx={{ mt: 2 }}>

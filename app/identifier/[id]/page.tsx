@@ -54,7 +54,6 @@ export default async function Page({ params }: { params: { id: string } }) {
     const response = await fetch(`${BUNDLE_LIST_URL}/${BUNDLE_LIST_FILE}`, {
       signal: AbortSignal.timeout(10000), // 10 second timeout
     });
-    
     if (!response.ok) {
       console.error(`Failed to fetch bundle list for page: ${response.status}`);
       notFound();
