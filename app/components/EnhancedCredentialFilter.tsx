@@ -90,7 +90,8 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
       // Add a small delay to show the loading animation
       await new Promise(resolve => setTimeout(resolve, 300));
       // Use relative path for client-side navigation to work with basePath
-      router.push(`identifier/${encodeURIComponent(bundle.id)}`);
+      // Include trailing slash to match Next.js trailingSlash: true config
+      router.push(`identifier/${encodeURIComponent(bundle.id)}/`);
     } catch (error) {
       setIsLoading(false);
     }
