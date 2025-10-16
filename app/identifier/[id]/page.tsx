@@ -28,38 +28,29 @@ const KNOWN_CREDENTIAL_IDS = [
 ];
 
 export async function generateStaticParams() {
-  console.log('generateStaticParams: Starting static generation...');
-
   try {
     // Use the same data fetching logic as the Page component to ensure consistency
-    console.log('generateStaticParams: Fetching overlay bundle list...');
     const bundles = await fetchOverlayBundleList();
-    console.log(`generateStaticParams: Successfully fetched ${bundles.length} bundles`);
 
     if (bundles.length > 0) {
       // Extract all IDs from the grouped bundles
       const allIds = bundles.flatMap(bundle => bundle.ids);
-      console.log(`generateStaticParams: Found ${allIds.length} total credential IDs`);
-
+      
       // Combine with known IDs to ensure coverage
       const allIdsSet = new Set([...KNOWN_CREDENTIAL_IDS, ...allIds]);
       const uniqueIds = Array.from(allIdsSet);
-      console.log(`generateStaticParams: Generating ${uniqueIds.length} total pages`);
 
       return uniqueIds.map((id) => ({
-        id: encodeURIComponent(id)
+        id: id
       }));
     }
-
-    console.warn('generateStaticParams: No bundles found, using known IDs');
   } catch (error) {
     console.error('generateStaticParams: Error fetching bundles:', error);
   }
 
   // Fallback to known IDs
-  console.log(`generateStaticParams: Using ${KNOWN_CREDENTIAL_IDS.length} known credential IDs`);
   return KNOWN_CREDENTIAL_IDS.map((id) => ({
-    id: encodeURIComponent(id)
+    id: id
   }));
 }
 
@@ -69,16 +60,9 @@ export default async function Page({ params }: { params: { id: string } }) {
   try {
     // Use the same data fetching logic as generateStaticParams to ensure consistency
     const bundles = await fetchOverlayBundleList();
-    console.log(`Raw params.id: ${params.id}`);
-    console.log(`Decoded id: ${id}`);
-    console.log(`Available bundles: ${bundles.length}`);
-    console.log(`First bundle IDs: ${bundles[0]?.ids?.join(', ')}`);
-
     const option = bundles.find((bundle) => bundle.ids.includes(id));
 
     if (!option) {
-      console.error(`Bundle not found for ID: ${id}`);
-      console.error(`Available IDs: ${bundles.map(b => b.ids.join(', ')).join(' | ')}`);
       notFound();
     }
 
