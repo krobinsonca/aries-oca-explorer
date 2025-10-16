@@ -29,6 +29,7 @@ const KNOWN_CREDENTIAL_IDS = [
 
 export async function generateStaticParams() {
   console.log('generateStaticParams: Starting static generation...');
+  // Trigger new build to test credential detail pages
 
   try {
     // First try to fetch from API
