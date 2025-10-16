@@ -35,22 +35,23 @@ export async function generateStaticParams() {
     if (bundles.length > 0) {
       // Extract all IDs from the grouped bundles
       const allIds = bundles.flatMap(bundle => bundle.ids);
-
+      
       // Combine with known IDs to ensure coverage
       const allIdsSet = new Set([...KNOWN_CREDENTIAL_IDS, ...allIds]);
       const uniqueIds = Array.from(allIdsSet);
 
+      // Encode IDs to match navigation behavior (encodeURIComponent)
       return uniqueIds.map((id) => ({
-        id: id
+        id: encodeURIComponent(id)
       }));
     }
   } catch (error) {
     console.error('generateStaticParams: Error fetching bundles:', error);
   }
 
-  // Fallback to known IDs
+  // Fallback to known IDs - also encode them
   return KNOWN_CREDENTIAL_IDS.map((id) => ({
-    id: id
+    id: encodeURIComponent(id)
   }));
 }
 
