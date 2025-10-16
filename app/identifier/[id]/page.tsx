@@ -73,19 +73,9 @@ export default async function Page({ params }: { params: { id: string } }) {
   const id = decodeURIComponent(params.id);
 
   try {
-    // Fetch simple bundle list without ledger info to avoid timeout during static generation
-    const response = await fetch(`${BUNDLE_LIST_URL}/${BUNDLE_LIST_FILE}`, {
-      signal: AbortSignal.timeout(10000), // 10 second timeout
-    });
-    if (!response.ok) {
-      console.error(`Failed to fetch bundle list for page: ${response.status}`);
-      notFound();
-    }
-
-        const responseData = await response.json();
-        // Handle new API structure with 'value' property
-        const options: any[] = responseData.value || responseData;
-        const option = options.find((opt: any) => opt.id === id);
+    // Use the same data fetching logic as generateStaticParams to ensure consistency
+    const bundles = await fetchOverlayBundleList();
+    const option = bundles.find((bundle) => bundle.ids.includes(id));
 
     if (!option) {
       console.error(`Bundle not found for ID: ${id}`);
