@@ -33,12 +33,15 @@ export async function generateStaticParams() {
     const bundles = await fetchOverlayBundleList();
 
     if (bundles.length > 0) {
-      // Extract all IDs from the grouped bundles
+      // Extract all IDs from the grouped bundles - only use IDs that actually exist
       const allIds = bundles.flatMap(bundle => bundle.ids);
+      
+      console.log(`generateStaticParams: Found ${bundles.length} grouped bundles with ${allIds.length} total IDs`);
+      console.log(`generateStaticParams: Available IDs:`, allIds.slice(0, 5), '...');
 
-      // Combine with known IDs to ensure coverage
-      const allIdsSet = new Set([...KNOWN_CREDENTIAL_IDS, ...allIds]);
-      const uniqueIds = Array.from(allIdsSet);
+      // Only use IDs that actually exist in the grouped bundles
+      // Don't add KNOWN_CREDENTIAL_IDS as they might not exist in current API data
+      const uniqueIds = Array.from(new Set(allIds));
 
       // Encode IDs to match navigation behavior (encodeURIComponent)
       return uniqueIds.map((id) => ({
