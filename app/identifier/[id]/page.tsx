@@ -5,15 +5,26 @@ import { notFound } from "next/navigation";
 
 // Pre-defined list of known credential IDs for static generation
 const KNOWN_CREDENTIAL_IDS = [
-  // From the failing URLs you reported
-  '4WW6792ksq62UroZyfd6nQ:3:CL:1098:SpecialEventServer:1',
-  'RGjWbW1eycP7FrMf4QJvX8:3:CL:13:Person',
-  // Real credential IDs from the API
+  // Real credential IDs from the API (updated to match actual data)
+  '4WW6792ksq62UroZyfd6nQ:3:CL:1098:SpecialEventServer',
   'YWnESLB4SH275SMNvaJJ1L:2:Rental Property Business Licence:1.0',
   'YWnESLB4SH275SMNvaJJ1L:3:CL:38195:Rental Property Business Licence',
   'R12pguaP3VF2WiE6vAsiPF:2:Rental Property Business Licence:1.0',
   'R12pguaP3VF2WiE6vAsiPF:3:CL:4574:Rental Property Business Licence',
   'ARK5s3QZtjL5X65mLoubdk:2:Rental Property Business Licence:1.0',
+  '4WW6792ksq62UroZyfd6nQ:3:CL:1098:SellingItRight',
+  'TeT8SJGHruVL9up3Erp4o:3:CL:224665:Selling It Right',
+  'TeT8SJGHruVL9up3Erp4o:3:CL:400095:SellingItRight',
+  'Ttmj1pEotg8FbKZZD81S7i:3:CL:184:SellingItRight',
+  '4WW6792ksq62UroZyfd6nQ:3:CL:1098:ServingItRight',
+  'TeT8SJGHruVL9up3Erp4o:3:CL:224665:Serving It Right',
+  'TeT8SJGHruVL9up3Erp4o:3:CL:400095:ServingItRight',
+  'Ttmj1pEotg8FbKZZD81S7i:3:CL:184:ServingItRight',
+  'TeT8SJGHruVL9up3Erp4o:3:CL:224665:Special Event Server',
+  'TeT8SJGHruVL9up3Erp4o:3:CL:400095:SpecialEventServer',
+  'Ttmj1pEotg8FbKZZD81S7i:3:CL:184:SpecialEventServer',
+  'QzLYGuAebsy3MXQ6b1sFiT:3:CL:2351:lawyer',
+  'RCnz8GcyZ2iH7VFr5zGb9N:3:CL:35170:Lawyer Credential',
 ];
 
 export async function generateStaticParams() {
