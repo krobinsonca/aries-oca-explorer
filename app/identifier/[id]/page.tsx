@@ -38,9 +38,11 @@ export async function generateStaticParams() {
       signal: AbortSignal.timeout(15000), // Reduced timeout
     });
 
-    if (response.ok) {
-      const options: any[] = await response.json();
-      console.log(`generateStaticParams: Successfully fetched ${options.length} bundles from API`);
+        if (response.ok) {
+          const responseData = await response.json();
+          // Handle new API structure with 'value' property
+          const options: any[] = responseData.value || responseData;
+          console.log(`generateStaticParams: Successfully fetched ${options.length} bundles from API`);
 
       if (options.length > 0) {
         // Combine API results with known IDs to ensure coverage
@@ -80,8 +82,10 @@ export default async function Page({ params }: { params: { id: string } }) {
       notFound();
     }
 
-    const options: any[] = await response.json();
-    const option = options.find((opt: any) => opt.id === id);
+        const responseData = await response.json();
+        // Handle new API structure with 'value' property
+        const options: any[] = responseData.value || responseData;
+        const option = options.find((opt: any) => opt.id === id);
 
     if (!option) {
       console.error(`Bundle not found for ID: ${id}`);

@@ -273,7 +273,9 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
     }
 
     const body = await response.text();
-    const options: any[] = JSON.parse(body);
+    const responseData = JSON.parse(body);
+    // Handle new API structure with 'value' property
+    const options: any[] = responseData.value || responseData;
 
     // Group bundles by ocabundle path and collect all IDs for each unique OCA bundle
     const bundleGroups = options.reduce((acc, bundle) => {
