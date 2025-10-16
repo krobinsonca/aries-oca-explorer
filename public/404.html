@@ -2,36 +2,84 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Aries OCA Explorer</title>
+    <title>Page Not Found - Aries OCA Explorer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            text-align: center;
+            padding: 50px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+        }
+        .button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #0070f3;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+        .button:hover {
+            background: #0051cc;
+        }
+        .path {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 20px 0;
+            font-family: monospace;
+            word-break: break-all;
+        }
+    </style>
     <script>
-        // This is a catch-all 404 page for GitHub Pages
-        // It will try to load the actual page by making a request to the Next.js app
-        const path = window.location.pathname;
-        // Extract basePath from current URL (works for both fork and main repo)
-        const basePath = path.split('/').slice(0, 2).join('/') || '/aries-oca-explorer';
-        
-        // Try to load the page through the Next.js app
-        fetch(basePath + '/api/rewrite?path=' + encodeURIComponent(path))
-            .then(response => {
-                if (response.ok) {
-                    // If the page exists, redirect to it
-                    window.location.href = path;
-                } else {
-                    // If not, go to the main page
-                    window.location.href = basePath + '/';
-                }
-            })
-            .catch(() => {
-                // If there's an error, go to the main page
-                window.location.href = basePath + '/';
-            });
+        // For GitHub Pages: Attempt to handle client-side routing
+        (function() {
+            const path = window.location.pathname;
+            const basePath = '/aries-oca-explorer';
+
+            // If we're on a path that looks like it should exist,
+            // try adding a trailing slash (Next.js generates folders with index.html)
+            if (path.includes(basePath) && !path.endsWith('/')) {
+                // Redirect to the same path with a trailing slash
+                window.location.href = path + '/' + window.location.search + window.location.hash;
+            }
+        })();
     </script>
 </head>
 <body>
-    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
-        <h1>Aries OCA Explorer</h1>
-        <p>Loading...</p>
+    <div class="container">
+        <h1>404 - Page Not Found</h1>
+        <p>The page you're looking for doesn't exist or may have moved.</p>
+        <div class="path" id="attempted-path"></div>
+        <p>This might happen if:</p>
+        <ul style="text-align: left; display: inline-block;">
+            <li>The URL was mistyped</li>
+            <li>The credential ID is invalid</li>
+            <li>The page hasn't been generated yet</li>
+        </ul>
+        <br>
+        <a href="/aries-oca-explorer/" class="button">Go to Home Page</a>
     </div>
+    <script>
+        document.getElementById('attempted-path').textContent = 'Attempted to access: ' + window.location.pathname;
+    </script>
 </body>
 </html>

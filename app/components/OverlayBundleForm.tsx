@@ -20,7 +20,8 @@ export default function OverlayBundleForm({ options }: { options: any[] }) {
   const handleSelect = (value: string) => {
     const option = JSON.parse(value);
     setOption(option);
-    push(`identifier/${encodeURIComponent(option.id)}`);
+    // Include trailing slash to match Next.js trailingSlash: true config
+    push(`identifier/${encodeURIComponent(option.id)}/`);
   };
 
   return (
