@@ -29,37 +29,31 @@ const KNOWN_CREDENTIAL_IDS = [
 
 export async function generateStaticParams() {
   console.log('generateStaticParams: Starting static generation...');
-  // Trigger new build to test credential detail pages
 
   try {
-    // First try to fetch from API
-    console.log('generateStaticParams: Attempting to fetch bundle list...');
-    const response = await fetch(`${BUNDLE_LIST_URL}/${BUNDLE_LIST_FILE}`, {
-      signal: AbortSignal.timeout(15000), // Reduced timeout
-    });
+    // Use the same data fetching logic as the Page component to ensure consistency
+    console.log('generateStaticParams: Fetching overlay bundle list...');
+    const bundles = await fetchOverlayBundleList();
+    console.log(`generateStaticParams: Successfully fetched ${bundles.length} bundles`);
 
-        if (response.ok) {
-          const responseData = await response.json();
-          // Handle both array and object with 'value' property structures
-          const options: any[] = Array.isArray(responseData) ? responseData : (responseData.value || responseData);
-          console.log(`generateStaticParams: Successfully fetched ${options.length} bundles from API`);
+    if (bundles.length > 0) {
+      // Extract all IDs from the grouped bundles
+      const allIds = bundles.flatMap(bundle => bundle.ids);
+      console.log(`generateStaticParams: Found ${allIds.length} total credential IDs`);
+      
+      // Combine with known IDs to ensure coverage
+      const allIdsSet = new Set([...KNOWN_CREDENTIAL_IDS, ...allIds]);
+      const uniqueIds = Array.from(allIdsSet);
+      console.log(`generateStaticParams: Generating ${uniqueIds.length} total pages`);
 
-      if (options.length > 0) {
-        // Combine API results with known IDs to ensure coverage
-        const apiIds = options.map((option) => option.id);
-        const allIdsSet = new Set([...KNOWN_CREDENTIAL_IDS, ...apiIds]);
-        const allIds = Array.from(allIdsSet);
-        console.log(`generateStaticParams: Generating ${allIds.length} total pages`);
-
-        return allIds.map((id) => ({
-          id: encodeURIComponent(id)
-        }));
-      }
+      return uniqueIds.map((id) => ({
+        id: encodeURIComponent(id)
+      }));
     }
 
-    console.warn('generateStaticParams: API fetch failed or returned empty, using known IDs');
+    console.warn('generateStaticParams: No bundles found, using known IDs');
   } catch (error) {
-    console.error('generateStaticParams: API fetch error:', error);
+    console.error('generateStaticParams: Error fetching bundles:', error);
   }
 
   // Fallback to known IDs
