@@ -4,6 +4,10 @@ const webpack = require('webpack');
 const nextConfig = {
     output: 'export',
     trailingSlash: true,
+    // Disable image optimization for static export
+    images: {
+        unoptimized: true,
+    },
     // Only use basePath and assetPrefix in production (for GitHub Pages)
     ...(process.env.NODE_ENV === 'production' && {
         basePath: '/aries-oca-explorer',
