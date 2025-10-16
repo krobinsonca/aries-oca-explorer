@@ -40,8 +40,8 @@ export async function generateStaticParams() {
 
         if (response.ok) {
           const responseData = await response.json();
-          // Handle new API structure with 'value' property
-          const options: any[] = responseData.value || responseData;
+          // Handle both array and object with 'value' property structures
+          const options: any[] = Array.isArray(responseData) ? responseData : (responseData.value || responseData);
           console.log(`generateStaticParams: Successfully fetched ${options.length} bundles from API`);
 
       if (options.length > 0) {

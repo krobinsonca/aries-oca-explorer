@@ -272,10 +272,10 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const body = await response.text();
-    const responseData = JSON.parse(body);
-    // Handle new API structure with 'value' property
-    const options: any[] = responseData.value || responseData;
+        const body = await response.text();
+        const responseData = JSON.parse(body);
+        // Handle both array and object with 'value' property structures
+        const options: any[] = Array.isArray(responseData) ? responseData : (responseData.value || responseData);
 
     // Group bundles by ocabundle path and collect all IDs for each unique OCA bundle
     const bundleGroups = options.reduce((acc, bundle) => {
