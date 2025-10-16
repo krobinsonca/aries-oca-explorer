@@ -40,7 +40,7 @@ export async function generateStaticParams() {
       // Extract all IDs from the grouped bundles
       const allIds = bundles.flatMap(bundle => bundle.ids);
       console.log(`generateStaticParams: Found ${allIds.length} total credential IDs`);
-      
+
       // Combine with known IDs to ensure coverage
       const allIdsSet = new Set([...KNOWN_CREDENTIAL_IDS, ...allIds]);
       const uniqueIds = Array.from(allIdsSet);
