@@ -35,7 +35,6 @@ export async function generateStaticParams() {
     if (bundles.length > 0) {
       // Extract all IDs from the grouped bundles - only use IDs that actually exist
       const allIds = bundles.flatMap(bundle => bundle.ids);
-      
       console.log(`generateStaticParams: Found ${bundles.length} grouped bundles with ${allIds.length} total IDs`);
       console.log(`generateStaticParams: Available IDs:`, allIds.slice(0, 5), '...');
 
