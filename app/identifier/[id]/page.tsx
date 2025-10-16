@@ -69,7 +69,8 @@ export default async function Page({ params }: { params: { id: string } }) {
   try {
     // Use the same data fetching logic as generateStaticParams to ensure consistency
     const bundles = await fetchOverlayBundleList();
-    console.log(`Looking for ID: ${id}`);
+    console.log(`Raw params.id: ${params.id}`);
+    console.log(`Decoded id: ${id}`);
     console.log(`Available bundles: ${bundles.length}`);
     console.log(`First bundle IDs: ${bundles[0]?.ids?.join(', ')}`);
 
