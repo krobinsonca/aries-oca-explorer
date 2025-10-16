@@ -78,7 +78,7 @@ export default async function Page({ params }: { params: { id: string } }) {
     console.log(`Looking for ID: ${id}`);
     console.log(`Available bundles: ${bundles.length}`);
     console.log(`First bundle IDs: ${bundles[0]?.ids?.join(', ')}`);
-    
+
     const option = bundles.find((bundle) => bundle.ids.includes(id));
 
     if (!option) {
