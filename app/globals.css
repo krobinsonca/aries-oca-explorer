@@ -10,8 +10,8 @@
 /* BC Sans Font Faces */
 @font-face {
   font-family: 'BC Sans';
-  src: url('/fonts/BCSans-Regular.woff2') format('woff2'),
-       url('/fonts/BCSans-Regular.woff') format('woff');
+  src: url('/aries-oca-explorer/fonts/BCSans-Regular.woff2') format('woff2'),
+       url('/aries-oca-explorer/fonts/BCSans-Regular.woff') format('woff');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -19,8 +19,8 @@
 
 @font-face {
   font-family: 'BC Sans';
-  src: url('/fonts/BCSans-Italic.woff2') format('woff2'),
-       url('/fonts/BCSans-Italic.woff') format('woff');
+  src: url('/aries-oca-explorer/fonts/BCSans-Italic.woff2') format('woff2'),
+       url('/aries-oca-explorer/fonts/BCSans-Italic.woff') format('woff');
   font-weight: 400;
   font-style: italic;
   font-display: swap;
@@ -28,8 +28,8 @@
 
 @font-face {
   font-family: 'BC Sans';
-  src: url('/fonts/BCSans-Light.woff2') format('woff2'),
-       url('/fonts/BCSans-Light.woff') format('woff');
+  src: url('/aries-oca-explorer/fonts/BCSans-Light.woff2') format('woff2'),
+       url('/aries-oca-explorer/fonts/BCSans-Light.woff') format('woff');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
@@ -37,8 +37,8 @@
 
 @font-face {
   font-family: 'BC Sans';
-  src: url('/fonts/BCSans-LightItalic.woff2') format('woff2'),
-       url('/fonts/BCSans-LightItalic.woff') format('woff');
+  src: url('/aries-oca-explorer/fonts/BCSans-LightItalic.woff2') format('woff2'),
+       url('/aries-oca-explorer/fonts/BCSans-LightItalic.woff') format('woff');
   font-weight: 300;
   font-style: italic;
   font-display: swap;
@@ -46,8 +46,8 @@
 
 @font-face {
   font-family: 'BC Sans';
-  src: url('/fonts/BCSans-Bold.woff2') format('woff2'),
-       url('/fonts/BCSans-Bold.woff') format('woff');
+  src: url('/aries-oca-explorer/fonts/BCSans-Bold.woff2') format('woff2'),
+       url('/aries-oca-explorer/fonts/BCSans-Bold.woff') format('woff');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -55,8 +55,8 @@
 
 @font-face {
   font-family: 'BC Sans';
-  src: url('/fonts/BCSans-BoldItalic.woff2') format('woff2'),
-       url('/fonts/BCSans-BoldItalic.woff') format('woff');
+  src: url('/aries-oca-explorer/fonts/BCSans-BoldItalic.woff2') format('woff2'),
+       url('/aries-oca-explorer/fonts/BCSans-BoldItalic.woff') format('woff');
   font-weight: 700;
   font-style: italic;
   font-display: swap;
