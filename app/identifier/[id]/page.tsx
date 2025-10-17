@@ -47,12 +47,14 @@ export async function generateStaticParams() {
 }
 
 export default async function Page({ params }: { params: { id: string } }) {
-  // Try to decode the ID - Next.js should already decode it, but let's be safe
+  // Decode the ID - it may be double-encoded due to how Next.js handles dynamic routes
   let id = params.id;
 
-  // Check if the ID is still URL-encoded (contains %XX patterns)
-  if (id.includes('%')) {
-    id = decodeURIComponent(id);
+  // Keep decoding while the ID contains URL-encoded characters
+  while (id.includes('%')) {
+    const decoded = decodeURIComponent(id);
+    if (decoded === id) break; // Prevent infinite loop if decode doesn't change anything
+    id = decoded;
   }
 
   try {
