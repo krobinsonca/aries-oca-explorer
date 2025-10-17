@@ -49,7 +49,7 @@ export async function generateStaticParams() {
 export default async function Page({ params }: { params: { id: string } }) {
   // Try to decode the ID - Next.js should already decode it, but let's be safe
   let id = params.id;
-  
+
   // Check if the ID is still URL-encoded (contains %XX patterns)
   if (id.includes('%')) {
     id = decodeURIComponent(id);
