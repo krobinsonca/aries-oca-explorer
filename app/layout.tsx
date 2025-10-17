@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import '@/app/globals.css';
 import ClientProviders from '@/app/components/ClientProviders';
 import Header from '@/app/components/Header';
+import { bcSans } from '@/app/fonts';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -17,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={bcSans.variable}>
       <body className={inter.className}>
         {/* Skip link for keyboard navigation */}
         <a href="#main-content" className="skip-link">

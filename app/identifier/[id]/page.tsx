@@ -1,59 +1,71 @@
+import Header from "@/app/components/Header";
 import OverlayBundleView from "@/app/components/OverlayBundleView";
-import { fetchOverlayBundleList } from "@/app/lib/data";
+import { fetchOverlayBundleList, BUNDLE_LIST_URL, BUNDLE_LIST_FILE } from "@/app/lib/data";
 import { notFound } from "next/navigation";
 
-// Helper function to encode credential ID for use as filename
-// Use base64 encoding to avoid issues with special characters in GitHub Pages
-function encodeIdForFilename(id: string): string {
-  // Use browser-compatible base64 encoding (same as btoa)
-  const encoded = Buffer.from(id, 'utf8').toString('base64');
-  // Make it URL-safe by replacing + with - and / with _
-  return encoded
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
-}
+// Pre-defined list of known credential IDs for static generation
+const KNOWN_CREDENTIAL_IDS = [
+  // Real credential IDs from the API (updated to match actual data)
+  '4WW6792ksq62UroZyfd6nQ:3:CL:1098:SpecialEventServer',
+  'YWnESLB4SH275SMNvaJJ1L:2:Rental Property Business Licence:1.0',
+  'YWnESLB4SH275SMNvaJJ1L:3:CL:38195:Rental Property Business Licence',
+  'R12pguaP3VF2WiE6vAsiPF:2:Rental Property Business Licence:1.0',
+  'R12pguaP3VF2WiE6vAsiPF:3:CL:4574:Rental Property Business Licence',
+  'ARK5s3QZtjL5X65mLoubdk:2:Rental Property Business Licence:1.0',
+  '4WW6792ksq62UroZyfd6nQ:3:CL:1098:SellingItRight',
+  'TeT8SJGHruVL9up3Erp4o:3:CL:224665:Selling It Right',
+  'TeT8SJGHruVL9up3Erp4o:3:CL:400095:SellingItRight',
+  'Ttmj1pEotg8FbKZZD81S7i:3:CL:184:SellingItRight',
+  '4WW6792ksq62UroZyfd6nQ:3:CL:1098:ServingItRight',
+  'TeT8SJGHruVL9up3Erp4o:3:CL:224665:Serving It Right',
+  'TeT8SJGHruVL9up3Erp4o:3:CL:400095:ServingItRight',
+  'Ttmj1pEotg8FbKZZD81S7i:3:CL:184:ServingItRight',
+  'TeT8SJGHruVL9up3Erp4o:3:CL:224665:Special Event Server',
+  'TeT8SJGHruVL9up3Erp4o:3:CL:400095:SpecialEventServer',
+  'Ttmj1pEotg8FbKZZD81S7i:3:CL:184:SpecialEventServer',
+  'QzLYGuAebsy3MXQ6b1sFiT:3:CL:2351:lawyer',
+  'RCnz8GcyZ2iH7VFr5zGb9N:3:CL:35170:Lawyer Credential',
+];
 
-// Helper function to decode filename back to credential ID
-function decodeIdFromFilename(encodedId: string): string {
-  try {
-    // Reverse the URL-safe base64 encoding
-    const base64 = encodedId
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
-    // Add padding if needed
-    const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
-    return Buffer.from(padded, 'base64').toString('utf-8');
-  } catch (e) {
-    console.error('Failed to decode ID:', encodedId, e);
-    // If decoding fails, return as is
-    return encodedId;
-  }
-}
-
-// Required for static export - generates static params at build time
 export async function generateStaticParams() {
   try {
-    const options: any[] = await fetchOverlayBundleList();
-    return options.map((option) => ({
-      id: encodeIdForFilename(option.id)
-    }));
+    // Use the same data fetching logic as the Page component to ensure consistency
+    const bundles = await fetchOverlayBundleList();
+
+    if (bundles.length > 0) {
+      // Extract all IDs from the grouped bundles - only use IDs that actually exist
+      const allIds = bundles.flatMap(bundle => bundle.ids);
+      console.log(`generateStaticParams: Found ${bundles.length} grouped bundles with ${allIds.length} total IDs`);
+      console.log(`generateStaticParams: Available IDs:`, allIds.slice(0, 5), '...');
+
+      // Only use IDs that actually exist in the grouped bundles
+      // Don't add KNOWN_CREDENTIAL_IDS as they might not exist in current API data
+      const uniqueIds = Array.from(new Set(allIds));
+
+      // Encode IDs to match navigation behavior (encodeURIComponent)
+      return uniqueIds.map((id) => ({
+        id: encodeURIComponent(id)
+      }));
+    }
   } catch (error) {
-    console.error('Error generating static params:', error);
-    // Return empty array if data fetching fails during build
-    return [];
+    console.error('generateStaticParams: Error fetching bundles:', error);
   }
+
+  // Fallback to known IDs - also encode them
+  return KNOWN_CREDENTIAL_IDS.map((id) => ({
+    id: encodeURIComponent(id)
+  }));
 }
 
 export default async function Page({ params }: { params: { id: string } }) {
-  const id = decodeIdFromFilename(params.id);
+  const id = decodeURIComponent(params.id);
 
   try {
-    const options: any[] = await fetchOverlayBundleList();
-    const option = options.find((option) => option.id === id);
+    // Use the same data fetching logic as generateStaticParams to ensure consistency
+    const bundles = await fetchOverlayBundleList();
+    const option = bundles.find((bundle) => bundle.ids.includes(id));
 
     if (!option) {
-      console.error(`Option not found for ID: ${id}`);
       notFound();
     }
 
@@ -61,7 +73,7 @@ export default async function Page({ params }: { params: { id: string } }) {
       <OverlayBundleView option={option} />
     );
   } catch (error) {
-    console.error('Error fetching overlay bundle list:', error);
+    console.error('Error fetching bundle data:', error);
     notFound();
   }
 }

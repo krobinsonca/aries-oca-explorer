@@ -1,5 +1,6 @@
 import OverlayBundleFactory from "@/app/services/OverlayBundleFactory";
 
+// Data source URLs
 export const BUNDLE_LIST_URL = "https://bcgov.github.io/aries-oca-bundles";
 export const BUNDLE_LIST_FILE = "ocabundleslist.json";
 export const GITHUB_RAW_URL = "https://raw.githubusercontent.com/bcgov/aries-oca-bundles/main";
@@ -36,53 +37,29 @@ export interface BundleFilters {
 // Cache for README content to avoid repeated fetches
 const readmeCache = new Map<string, { ledger?: string; ledgerUrl?: string }>();
 
-// Ledger normalization mapping
-// Maps various formats to consistent internal values
-const LEDGER_NORMALIZATION_MAP: Record<string, string> = {
-  // Candy ledger variations
-  'candy:prod': 'candy-prod',
-  'candy:dev': 'candy-dev',
-  'candy:test': 'candy-test',
-  'CANDY:PROD': 'candy-prod',
-  'CANDY:DEV': 'candy-dev',
-  'CANDY:TEST': 'candy-test',
-  'CANDY-Prod': 'candy-prod',
-  'CANDY-Dev': 'candy-dev',
-  'CANDY-Test': 'candy-test',
-  'CANdy-Prod': 'candy-prod',
-  'CANdy-Dev': 'candy-dev',
-  'CANdy-Test': 'candy-test',
-  'Candy:Prod': 'candy-prod',
-  'Candy:Dev': 'candy-dev',
-  'Candy:Test': 'candy-test',
-
-  // BCovrin ledger variations
-  'bcovrin:test': 'bcovrin-test',
-  'bcovrin:prod': 'bcovrin-prod',
-  'BCOVRIN:TEST': 'bcovrin-test',
-  'BCOVRIN:PROD': 'bcovrin-prod',
-  'BCOVRIN-Test': 'bcovrin-test',
-  'BCOVRIN-Prod': 'bcovrin-prod',
-  'Bcovrin:Test': 'bcovrin-test',
-  'Bcovrin:Prod': 'bcovrin-prod',
-
-  // Other common variations
-  'mainnet': 'mainnet',
-  'testnet': 'testnet',
-  'devnet': 'devnet',
-  'MAINNET': 'mainnet',
-  'TESTNET': 'testnet',
-  'DEVNET': 'devnet',
-
-  // Legacy mappings
-  'localhost:test': 'localhost-test',
-  'local:test': 'localhost-test',
-};
-
 // Normalize ledger value for consistent filtering
 export function normalizeLedgerValue(ledger: string | undefined): string {
   if (!ledger) return "unknown";
-  const normalized = LEDGER_NORMALIZATION_MAP[ledger] || ledger.toLowerCase().replace(/[^a-z0-9]/g, "-");
+
+  // Convert to lowercase first
+  let normalized = ledger.toLowerCase();
+
+  // Handle special legacy cases that don't follow standard patterns
+  const specialCases: Record<string, string> = {
+    'local:test': 'localhost-test',
+    'localhost:test': 'localhost-test',
+  };
+
+  if (specialCases[normalized]) {
+    return specialCases[normalized];
+  }
+
+  // Apply fallback logic: replace non-alphanumeric with hyphens
+  normalized = normalized.replace(/[^a-z0-9]/g, '-');
+
+  // Clean up multiple consecutive hyphens and leading/trailing hyphens
+  normalized = normalized.replace(/-+/g, '-').replace(/^-+|-+$/g, '');
+
   return normalized;
 }
 
@@ -130,6 +107,8 @@ function getLedgerExplorerUrl(ledgerNormalized: string | undefined): string | un
       return "https://candyscan.idlab.org/home/CANDY_DEV";
     case "candy-test":
       return "https://candyscan.idlab.org/home/CANDY_TEST";
+    case "bcovrin-test":
+      return "https://indyscan.bcovrin.vonx.io/home/BCOVRIN_TEST";
     default:
       return undefined;
   }
@@ -151,7 +130,6 @@ export function extractSchemaSeqNo(schemaId: string, credDefIds: string[]): stri
 
   // Try exact match first
   const matchingCredDef = credDefIds.find(credDefId => credDefId.includes(`:${schemaName}`));
-
   if (matchingCredDef) {
     console.log(`Found matching cred def for schema "${schemaName}": ${matchingCredDef}`);
     return extractCredDefSeqNo(matchingCredDef);
@@ -170,7 +148,6 @@ export function extractSchemaSeqNoFromId(schemaId: string): string | undefined {
   // This might work for some ledger implementations
   const parts = schemaId.split(':');
   console.log(`Schema ID parts:`, parts);
-
   if (parts.length >= 4) {
     // Check if the last part before version is a number
     const potentialSeqNo = parts[parts.length - 2];
@@ -188,7 +165,6 @@ export function extractSchemaSeqNoFromId(schemaId: string): string | undefined {
       return parts[i];
     }
   }
-
   console.log(`No seqNo found in schema ID`);
   return undefined;
 }
@@ -204,11 +180,11 @@ export function constructExplorerUrl(
   const baseUrl = getLedgerExplorerUrl(ledgerNormalized);
   if (!baseUrl) return undefined;
 
-  // Get the base URL without the /home path for transaction URLs
-  const explorerRoot = baseUrl.replace('/home/CANDY_PROD', '').replace('/home/CANDY_DEV', '').replace('/home/CANDY_TEST', '');
+  // Extract the explorer root by removing the /home/<network> path
+  const explorerRoot = baseUrl.replace(/\/home\/[^/]+$/, '');
 
   // Convert ledger normalized value to the correct network format for URLs
-  const networkName = ledgerNormalized.toUpperCase().replace('-', '_');
+  const networkName = ledgerNormalized.toUpperCase().replace(/-/g, '_');
 
   if (id.includes(':3:CL:')) {
     // Credential Definition ID - extract sequence number
@@ -236,40 +212,19 @@ export function extractLedgerFromReadme(readmeContent: string): { ledger?: strin
 
     // Check if this line contains the table header
     if (line.includes("| Identifier") && line.includes("| Location") && line.includes("| URL")) {
-      const tableRows: { ledger: string; ledgerUrl: string }[] = [];
-
-      // Collect all table rows
+      // Look for the next non-empty line after the separator line
       for (let j = i + 2; j < lines.length; j++) {
         const dataLine = lines[j].trim();
         if (dataLine && dataLine.includes("|") && !dataLine.includes("---")) {
           // Parse the table row
           const parts = dataLine.split("|").map(p => p.trim()).filter(p => p);
           if (parts.length >= 3) {
-            tableRows.push({
-              ledger: parts[1], // Location column
-              ledgerUrl: parts[2] // URL column
-            });
+            ledger = parts[1]; // Location column
+            ledgerUrl = parts[2]; // URL column
+            break;
           }
-        } else if (dataLine === "" || !dataLine.includes("|")) {
-          // End of table
-          break;
         }
       }
-
-      // Prioritize Candy Production entries, then fall back to first entry
-      const candyRow = tableRows.find(row =>
-        row.ledger.toLowerCase().includes('candy') &&
-        row.ledger.toLowerCase().includes('prod')
-      );
-
-      if (candyRow) {
-        ledger = candyRow.ledger;
-        ledgerUrl = candyRow.ledgerUrl;
-      } else if (tableRows.length > 0) {
-        ledger = tableRows[0].ledger;
-        ledgerUrl = tableRows[0].ledgerUrl;
-      }
-
       break;
     }
   }
@@ -291,7 +246,6 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{ ledger?: s
 
     const response = await fetch(readmeUrl);
     if (!response.ok) {
-      console.warn(`README not found for ${ocabundle}: ${response.status} ${response.statusText}`);
       const emptyResult = {};
       readmeCache.set(ocabundle, emptyResult);
       return emptyResult;
@@ -300,17 +254,10 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{ ledger?: s
     const readmeContent = await response.text();
     const ledgerInfo = extractLedgerFromReadme(readmeContent);
 
-    if (!ledgerInfo.ledger) {
-      console.warn(`No ledger info extracted from README: ${readmeUrl}`);
-    } else {
-      console.log(`Found ledger info for ${ocabundle}: ${ledgerInfo.ledger}`);
-    }
-
     // Cache the result
     readmeCache.set(ocabundle, ledgerInfo);
     return ledgerInfo;
   } catch (error) {
-    console.error(`Error fetching README for ${ocabundle}:`, error);
     const emptyResult = {};
     readmeCache.set(ocabundle, emptyResult);
     return emptyResult;
@@ -320,39 +267,15 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{ ledger?: s
 // Enhanced function to fetch bundle list with ledger information
 export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
   try {
-    // Add cache-busting timestamp to ensure fresh data
-    const cacheBuster = Date.now();
-    const url = `${BUNDLE_LIST_URL}/${BUNDLE_LIST_FILE}?t=${cacheBuster}`;
-
-    console.log(`Fetching bundle data from: ${url}`);
-
-    const response = await fetch(url, {
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
-    });
-
+    const response = await fetch(BUNDLE_LIST_URL + "/" + BUNDLE_LIST_FILE);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const body = await response.text();
-    console.log(`Response body length: ${body.length} characters`);
-
-    const options: any[] = JSON.parse(body);
-
-    // Debug logging for build troubleshooting
-    console.log(`Raw bundle fetch: ${options.length} bundles`);
-    const vancouverCount = options.filter(b => b.org && b.org.includes('Vancouver')).length;
-    console.log(`Vancouver bundles in raw data: ${vancouverCount}`);
-
-    // Log first few Vancouver bundles for debugging
-    const vancouverBundles = options.filter(b => b.org && b.org.includes('Vancouver'));
-    console.log('Vancouver bundles found:');
-    vancouverBundles.forEach(b => {
-      console.log(`  - ${b.name} (${b.id})`);
-    });
+        const body = await response.text();
+        const responseData = JSON.parse(body);
+        // Handle both array and object with 'value' property structures
+        const options: any[] = Array.isArray(responseData) ? responseData : (responseData.value || responseData);
 
     // Group bundles by ocabundle path and collect all IDs for each unique OCA bundle
     const bundleGroups = options.reduce((acc, bundle) => {

@@ -21,8 +21,15 @@ class OverlayBundleFactory {
     url: string
   ): Promise<Record<string, string>> {
     try {
-      // Most bundles don't have testdata.csv, so we'll be more selective
-      // Only attempt to fetch for bundles that are likely to have test data
+      // Most bundles don't have testdata.csv, so we skip fetching to avoid 404 console noise.
+      // Test data is optional and mainly used for development/testing.
+      // If needed in production, this can be enabled per-bundle or via configuration.
+      return {};
+
+      // The code below is preserved but disabled to avoid 404 errors in console.
+      // Uncomment and modify the return statement above to re-enable test data fetching.
+
+      /*
       const testDataUrl = url.replace("OCABundle.json", "testdata.csv");
 
       // Skip HEAD request to avoid 404 console noise
@@ -41,7 +48,10 @@ class OverlayBundleFactory {
 
         if (!response.ok) {
           // File doesn't exist or other error, return empty object silently
-          // Suppress all console output for missing test data files
+          // Don't log 404 errors as they're expected when test data doesn't exist
+          if (process.env.NODE_ENV !== 'production' && response.status !== 404) {
+            console.warn(`Failed to fetch test data from ${testDataUrl}: ${response.status}`);
+          }
           return {};
         }
 
@@ -83,6 +93,7 @@ class OverlayBundleFactory {
         // Re-throw unexpected errors
         throw fetchError;
       }
+      */
 
     } catch (error) {
       // Silently handle any errors - testdata.csv files are optional

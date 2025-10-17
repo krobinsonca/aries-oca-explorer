@@ -4,8 +4,15 @@ const webpack = require('webpack');
 const nextConfig = {
     output: 'export',
     trailingSlash: true,
-    basePath: process.env.NODE_ENV === 'production' ? '/aries-oca-explorer' : '',
-    assetPrefix: process.env.NODE_ENV === 'production' ? '/aries-oca-explorer/' : '',
+    // Disable image optimization for static export
+    images: {
+        unoptimized: true,
+    },
+    // Only use basePath and assetPrefix in production (for GitHub Pages)
+    ...(process.env.NODE_ENV === 'production' && {
+        basePath: '/aries-oca-explorer',
+        assetPrefix: '/aries-oca-explorer',
+    }),
     // https://nextjs.org/docs/api-reference/next.config.js/custom-webpack-config
     webpack: (config, { isServer }) => {
         config.resolve.alias = {
