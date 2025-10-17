@@ -328,6 +328,11 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
     const body = await response.text();
     const options: any[] = JSON.parse(body);
 
+    // Debug logging for build troubleshooting
+    console.log(`Raw bundle fetch: ${options.length} bundles`);
+    const vancouverCount = options.filter(b => b.org && b.org.includes('Vancouver')).length;
+    console.log(`Vancouver bundles in raw data: ${vancouverCount}`);
+
     // Group bundles by ocabundle path and collect all IDs for each unique OCA bundle
     const bundleGroups = options.reduce((acc, bundle) => {
       const existing = acc.find((b: any) => b.ocabundle === bundle.ocabundle);
