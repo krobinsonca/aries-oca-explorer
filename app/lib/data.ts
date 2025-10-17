@@ -244,8 +244,16 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{ ledger?: s
     const readmePath = ocabundle.replace("OCABundle.json", "README.md");
     const readmeUrl = `${GITHUB_RAW_URL}/${readmePath}`;
 
-    const response = await fetch(readmeUrl);
+    const response = await fetch(readmeUrl, {
+      // Add timeout to prevent hanging requests
+      signal: AbortSignal.timeout(5000) // 5 second timeout for README files
+    });
+
     if (!response.ok) {
+      // Don't log 404s as they're expected for many bundles
+      if (response.status !== 404) {
+        console.warn(`Failed to fetch README for ${ocabundle}: ${response.status}`);
+      }
       const emptyResult = {};
       readmeCache.set(ocabundle, emptyResult);
       return emptyResult;
@@ -258,6 +266,10 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{ ledger?: s
     readmeCache.set(ocabundle, ledgerInfo);
     return ledgerInfo;
   } catch (error) {
+    // Don't log timeout errors as they're expected for missing README files
+    if (error instanceof Error && !error.name.includes('TimeoutError')) {
+      console.warn(`Error fetching README for ${ocabundle}:`, error.message);
+    }
     const emptyResult = {};
     readmeCache.set(ocabundle, emptyResult);
     return emptyResult;
@@ -277,7 +289,9 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0'
-      }
+      },
+      // Add timeout to prevent hanging requests
+      signal: AbortSignal.timeout(10000) // 10 second timeout
     });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -309,34 +323,46 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
     // Enhance OCA bundles with ledger information
     const enhancedBundles: BundleWithLedger[] = [];
 
-    // Process in batches to avoid overwhelming the GitHub API
-    const batchSize = 5;
+    // Process in smaller batches to avoid overwhelming the GitHub API
+    const batchSize = 3; // Reduced from 5 to 3
     for (let i = 0; i < bundleGroups.length; i += batchSize) {
       const batch = bundleGroups.slice(i, i + batchSize);
 
       const batchPromises = batch.map(async (bundle: any): Promise<BundleWithLedger> => {
-        const ledgerInfo = await fetchSchemaReadme(bundle.ocabundle);
+        try {
+          const ledgerInfo = await fetchSchemaReadme(bundle.ocabundle);
 
-        // Normalize ledger value and create display name
-        const ledgerNormalized = ledgerInfo.ledger ? normalizeLedgerValue(ledgerInfo.ledger) : undefined;
-        const ledgerDisplayName = ledgerInfo.ledger ? getLedgerDisplayName(ledgerInfo.ledger) : undefined;
-        const explorerUrl = ledgerInfo.ledgerUrl;
+          // Normalize ledger value and create display name
+          const ledgerNormalized = ledgerInfo.ledger ? normalizeLedgerValue(ledgerInfo.ledger) : undefined;
+          const ledgerDisplayName = ledgerInfo.ledger ? getLedgerDisplayName(ledgerInfo.ledger) : undefined;
+          const explorerUrl = ledgerInfo.ledgerUrl;
 
-        return {
-          ...bundle,
-          ledger: ledgerInfo.ledger,
-          ledgerUrl: explorerUrl,
-          ledgerDisplayName: ledgerDisplayName,
-          ledgerNormalized: ledgerNormalized
-        };
+          return {
+            ...bundle,
+            ledger: ledgerInfo.ledger,
+            ledgerUrl: explorerUrl,
+            ledgerDisplayName: ledgerDisplayName,
+            ledgerNormalized: ledgerNormalized
+          };
+        } catch (error) {
+          // If README fetch fails, return bundle without ledger info
+          console.warn(`Failed to fetch ledger info for ${bundle.ocabundle}:`, error);
+          return {
+            ...bundle,
+            ledger: undefined,
+            ledgerUrl: undefined,
+            ledgerDisplayName: undefined,
+            ledgerNormalized: undefined
+          };
+        }
       });
 
       const batchResults = await Promise.all(batchPromises);
       enhancedBundles.push(...batchResults);
 
-      // Add a small delay between batches to be respectful to GitHub's API
+      // Add a longer delay between batches to be more respectful to GitHub's API
       if (i + batchSize < bundleGroups.length) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200)); // Increased from 100ms to 200ms
       }
     }
 
