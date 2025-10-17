@@ -1,6 +1,9 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import OverlayBundleView from "@/app/components/OverlayBundleView";
-import { fetchOverlayBundleList } from "@/app/lib/data";
-import { notFound } from "next/navigation";
+import { fetchOverlayBundleList, BundleWithLedger } from "@/app/lib/data";
+import { CircularProgress, Box, Typography } from '@mui/material';
 
 // Helper function to encode credential ID for use as filename
 // Use base64 encoding to avoid issues with special characters in GitHub Pages
@@ -31,20 +34,58 @@ function decodeIdFromFilename(encodedId: string): string {
   }
 }
 
-export async function generateStaticParams() {
-  const options: any[] = await fetchOverlayBundleList();
-  return options.map((option) => ({
-    id: encodeIdForFilename(option.id)
-  }));
-}
+export default function Page({ params }: { params: { id: string } }) {
+  const [option, setOption] = useState<BundleWithLedger | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export default async function Page({ params }: { params: { id: string } }) {
-  const id = decodeIdFromFilename(params.id);
-  const options: any[] = await fetchOverlayBundleList();
-  const option = options.find((option) => option.id === id);
+  useEffect(() => {
+    async function loadOption() {
+      try {
+        const id = decodeIdFromFilename(params.id);
+        const options: BundleWithLedger[] = await fetchOverlayBundleList();
+        const foundOption = options.find((opt) => opt.id === id);
+
+        if (!foundOption) {
+          setError(`Credential not found: ${id}`);
+        } else {
+          setOption(foundOption);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load credential details');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadOption();
+  }, [params.id]);
+
+  if (isLoading) {
+    return (
+      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="50vh" gap={2}>
+        <CircularProgress size={50} />
+        <Typography variant="body1">Loading credential details...</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="50vh" gap={2}>
+        <Typography variant="h6" color="error">Error loading credential</Typography>
+        <Typography variant="body2" color="text.secondary">{error}</Typography>
+      </Box>
+    );
+  }
 
   if (!option) {
-    notFound();
+    return (
+      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="50vh" gap={2}>
+        <Typography variant="h6" color="error">Credential not found</Typography>
+        <Typography variant="body2" color="text.secondary">The requested credential could not be found.</Typography>
+      </Box>
+    );
   }
 
   return (
