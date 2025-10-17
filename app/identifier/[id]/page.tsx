@@ -1,9 +1,6 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import OverlayBundleView from "@/app/components/OverlayBundleView";
-import { fetchOverlayBundleList, BundleWithLedger } from "@/app/lib/data";
-import { CircularProgress, Box, Typography } from '@mui/material';
+import { fetchOverlayBundleList } from "@/app/lib/data";
+import { notFound } from "next/navigation";
 
 // Helper function to encode credential ID for use as filename
 // Use base64 encoding to avoid issues with special characters in GitHub Pages
@@ -34,61 +31,37 @@ function decodeIdFromFilename(encodedId: string): string {
   }
 }
 
-export default function Page({ params }: { params: { id: string } }) {
-  const [option, setOption] = useState<BundleWithLedger | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// Required for static export - generates static params at build time
+export async function generateStaticParams() {
+  try {
+    const options: any[] = await fetchOverlayBundleList();
+    return options.map((option) => ({
+      id: encodeIdForFilename(option.id)
+    }));
+  } catch (error) {
+    console.error('Error generating static params:', error);
+    // Return empty array if data fetching fails during build
+    return [];
+  }
+}
 
-  useEffect(() => {
-    async function loadOption() {
-      try {
-        const id = decodeIdFromFilename(params.id);
-        const options: BundleWithLedger[] = await fetchOverlayBundleList();
-        const foundOption = options.find((opt) => opt.id === id);
+export default async function Page({ params }: { params: { id: string } }) {
+  const id = decodeIdFromFilename(params.id);
 
-        if (!foundOption) {
-          setError(`Credential not found: ${id}`);
-        } else {
-          setOption(foundOption);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load credential details');
-      } finally {
-        setIsLoading(false);
-      }
+  try {
+    const options: any[] = await fetchOverlayBundleList();
+    const option = options.find((option) => option.id === id);
+
+    if (!option) {
+      console.error(`Option not found for ID: ${id}`);
+      notFound();
     }
 
-    loadOption();
-  }, [params.id]);
-
-  if (isLoading) {
     return (
-      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="50vh" gap={2}>
-        <CircularProgress size={50} />
-        <Typography variant="body1">Loading credential details...</Typography>
-      </Box>
+      <OverlayBundleView option={option} />
     );
+  } catch (error) {
+    console.error('Error fetching overlay bundle list:', error);
+    notFound();
   }
-
-  if (error) {
-    return (
-      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="50vh" gap={2}>
-        <Typography variant="h6" color="error">Error loading credential</Typography>
-        <Typography variant="body2" color="text.secondary">{error}</Typography>
-      </Box>
-    );
-  }
-
-  if (!option) {
-    return (
-      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="50vh" gap={2}>
-        <Typography variant="h6" color="error">Credential not found</Typography>
-        <Typography variant="body2" color="text.secondary">The requested credential could not be found.</Typography>
-      </Box>
-    );
-  }
-
-  return (
-    <OverlayBundleView option={option} />
-  );
 }
