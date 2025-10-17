@@ -320,18 +320,39 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{ ledger?: s
 // Enhanced function to fetch bundle list with ledger information
 export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
   try {
-    const response = await fetch(BUNDLE_LIST_URL + "/" + BUNDLE_LIST_FILE);
+    // Add cache-busting timestamp to ensure fresh data
+    const cacheBuster = Date.now();
+    const url = `${BUNDLE_LIST_URL}/${BUNDLE_LIST_FILE}?t=${cacheBuster}`;
+
+    console.log(`Fetching bundle data from: ${url}`);
+
+    const response = await fetch(url, {
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const body = await response.text();
+    console.log(`Response body length: ${body.length} characters`);
+
     const options: any[] = JSON.parse(body);
 
     // Debug logging for build troubleshooting
     console.log(`Raw bundle fetch: ${options.length} bundles`);
     const vancouverCount = options.filter(b => b.org && b.org.includes('Vancouver')).length;
     console.log(`Vancouver bundles in raw data: ${vancouverCount}`);
+
+    // Log first few Vancouver bundles for debugging
+    const vancouverBundles = options.filter(b => b.org && b.org.includes('Vancouver'));
+    console.log('Vancouver bundles found:');
+    vancouverBundles.forEach(b => {
+      console.log(`  - ${b.name} (${b.id})`);
+    });
 
     // Group bundles by ocabundle path and collect all IDs for each unique OCA bundle
     const bundleGroups = options.reduce((acc, bundle) => {
