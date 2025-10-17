@@ -89,8 +89,18 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
     try {
       // Add a small delay to show the loading animation
       await new Promise(resolve => setTimeout(resolve, 300));
-      router.push(`/identifier/${encodeURIComponent(bundle.id)}`);
+
+      // Use base64 encoding to match static generation (browser-compatible)
+      const encodedId = btoa(bundle.id)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+
+      // Use relative path for client-side navigation to work with basePath
+      // Include trailing slash to match Next.js trailingSlash: true config
+      router.push(`identifier/${encodedId}/`);
     } catch (error) {
+      console.error('Navigation error:', error);
       setIsLoading(false);
     }
   };
