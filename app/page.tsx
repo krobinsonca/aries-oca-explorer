@@ -1,6 +1,19 @@
 import { fetchOverlayBundleList, BundleWithLedger } from '@/app/lib/data';
-import EnhancedCredentialFilter from '@/app/components/EnhancedCredentialFilter';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Paper } from '@mui/material';
+import dynamic from 'next/dynamic';
+
+// Dynamically import the client component to prevent SSR/SSG deoptimization
+const EnhancedCredentialFilter = dynamic(
+  () => import('@/app/components/EnhancedCredentialFilter'),
+  {
+    ssr: false,
+    loading: () => (
+      <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="body1">Loading credential explorer...</Typography>
+      </Paper>
+    )
+  }
+);
 
 // Generate static page with pre-fetched data
 export default async function Page() {
@@ -23,6 +36,20 @@ export default async function Page() {
   }
 
   return (
-    <EnhancedCredentialFilter options={options} />
+    <Box>
+      {/* Static content for SSG */}
+      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          OCA Bundle Explorer
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+          Explore and filter through {options.length} available credential bundles.
+          Search by name or description, or filter by ledger network.
+        </Typography>
+      </Paper>
+
+      {/* Client-side interactive component loaded dynamically */}
+      <EnhancedCredentialFilter options={options} />
+    </Box>
   );
 }
