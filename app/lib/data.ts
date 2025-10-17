@@ -267,7 +267,18 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{ ledger?: s
 // Enhanced function to fetch bundle list with ledger information
 export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
   try {
-    const response = await fetch(BUNDLE_LIST_URL + "/" + BUNDLE_LIST_FILE);
+    // Add cache-busting to ensure fresh data from CDN
+    const cacheBuster = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(7);
+    const url = `${BUNDLE_LIST_URL}/${BUNDLE_LIST_FILE}?t=${cacheBuster}&r=${randomSuffix}&nocache=1`;
+
+    const response = await fetch(url, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -404,7 +415,10 @@ function extractWatermarkFromObject(obj: any): string | object | undefined {
 
 export async function fetchOverlayBundleData(option: any, opts?: { includeTestData?: boolean }) {
   try {
-    option.url = BUNDLE_LIST_URL + "/" + option.ocabundle;
+    // Ensure proper URL construction without path doubling
+    const baseUrl = BUNDLE_LIST_URL.endsWith('/') ? BUNDLE_LIST_URL.slice(0, -1) : BUNDLE_LIST_URL;
+    const bundlePath = option.ocabundle.startsWith('/') ? option.ocabundle.slice(1) : option.ocabundle;
+    option.url = `${baseUrl}/${bundlePath}`;
 
     const includeTestData = opts?.includeTestData !== false;
 
