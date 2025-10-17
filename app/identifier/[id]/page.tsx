@@ -47,7 +47,13 @@ export async function generateStaticParams() {
 }
 
 export default async function Page({ params }: { params: { id: string } }) {
-  const id = decodeURIComponent(params.id);
+  // Try to decode the ID - Next.js should already decode it, but let's be safe
+  let id = params.id;
+  
+  // Check if the ID is still URL-encoded (contains %XX patterns)
+  if (id.includes('%')) {
+    id = decodeURIComponent(id);
+  }
 
   try {
     // Use the same data fetching logic as generateStaticParams to ensure consistency
@@ -60,7 +66,7 @@ export default async function Page({ params }: { params: { id: string } }) {
     });
 
     if (!option) {
-      console.warn(`Bundle not found for ID: ${id}`);
+      console.warn(`Bundle not found for ID: ${params.id} (decoded: ${id})`);
       // Log available IDs for debugging
       const availableIds = bundles.flatMap(b => b.ids).slice(0, 5);
       console.warn(`Available IDs (first 5): ${availableIds.join(', ')}`);
