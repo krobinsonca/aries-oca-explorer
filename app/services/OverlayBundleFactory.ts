@@ -41,10 +41,7 @@ class OverlayBundleFactory {
 
         if (!response.ok) {
           // File doesn't exist or other error, return empty object silently
-          // Don't log 404 errors as they're expected when test data doesn't exist
-          if (process.env.NODE_ENV === 'development' && response.status !== 404) {
-            console.warn(`Failed to fetch test data from ${testDataUrl}: ${response.status}`);
-          }
+          // Suppress all console output for missing test data files
           return {};
         }
 
