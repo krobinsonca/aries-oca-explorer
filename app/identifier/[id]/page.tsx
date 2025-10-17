@@ -28,39 +28,21 @@ const KNOWN_CREDENTIAL_IDS = [
 ];
 
 export async function generateStaticParams() {
-  // For static generation, we'll use a conservative approach
-  // that prioritizes build stability over live data fetching
+  // For static generation, we'll use a very conservative approach
+  // that prioritizes build stability and only uses IDs we know exist
 
-  // In production builds, we'll primarily use known IDs to avoid network issues
-  // The app will still fetch live data at runtime for better UX
   console.log('generateStaticParams: Using known credential IDs for static generation');
 
-  // Use the known IDs as the primary source for static generation
-  // This ensures the build doesn't fail due to network issues
+  // Use ONLY the known IDs that we've verified exist
+  // This prevents NEXT_NOT_FOUND errors during build
   const staticIds = KNOWN_CREDENTIAL_IDS.map((id) => ({
     id: encodeURIComponent(id)
   }));
 
-  // Optionally try to fetch additional IDs, but don't let it break the build
-  try {
-    const bundles = await fetchOverlayBundleList();
-    if (bundles.length > 0) {
-      const allIds = bundles.flatMap(bundle => bundle.ids);
-      console.log(`generateStaticParams: Also found ${allIds.length} live IDs`);
+  console.log(`generateStaticParams: Generating ${staticIds.length} static pages from known IDs`);
 
-      // Add any additional IDs that aren't already in our known list
-      const additionalIds = allIds.filter(id => !KNOWN_CREDENTIAL_IDS.includes(id));
-      const additionalStaticIds = additionalIds.map((id) => ({
-        id: encodeURIComponent(id)
-      }));
-
-      console.log(`generateStaticParams: Adding ${additionalStaticIds.length} additional IDs from live data`);
-      return [...staticIds, ...additionalStaticIds];
-    }
-  } catch (error) {
-    console.warn('generateStaticParams: Failed to fetch live data, using known IDs only:', error);
-  }
-
+  // Don't try to fetch live data during build time to avoid false positives
+  // The app will fetch live data at runtime for better UX
   return staticIds;
 }
 
@@ -74,6 +56,8 @@ export default async function Page({ params }: { params: { id: string } }) {
 
     if (!option) {
       console.warn(`Bundle not found for ID: ${id}`);
+      // For known IDs that don't exist, this might be a data inconsistency
+      // Log it but still show not found
       notFound();
     }
 
@@ -82,7 +66,6 @@ export default async function Page({ params }: { params: { id: string } }) {
     );
   } catch (error) {
     console.error('Error fetching bundle data:', error);
-    // Don't immediately call notFound() - let's try to be more graceful
     // Check if this might be a network issue vs a missing bundle
     if (error instanceof Error && error.message.includes('fetch')) {
       console.error('Network error during bundle fetch, this might be a temporary issue');
