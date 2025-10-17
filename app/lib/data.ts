@@ -49,6 +49,9 @@ const LEDGER_NORMALIZATION_MAP: Record<string, string> = {
   'CANDY-Prod': 'candy-prod',
   'CANDY-Dev': 'candy-dev',
   'CANDY-Test': 'candy-test',
+  'CANdy-Prod': 'candy-prod',
+  'CANdy-Dev': 'candy-dev',
+  'CANdy-Test': 'candy-test',
   'Candy:Prod': 'candy-prod',
   'Candy:Dev': 'candy-dev',
   'Candy:Test': 'candy-test',
@@ -233,19 +236,40 @@ export function extractLedgerFromReadme(readmeContent: string): { ledger?: strin
 
     // Check if this line contains the table header
     if (line.includes("| Identifier") && line.includes("| Location") && line.includes("| URL")) {
-      // Look for the next non-empty line after the separator line
+      const tableRows: { ledger: string; ledgerUrl: string }[] = [];
+
+      // Collect all table rows
       for (let j = i + 2; j < lines.length; j++) {
         const dataLine = lines[j].trim();
         if (dataLine && dataLine.includes("|") && !dataLine.includes("---")) {
           // Parse the table row
           const parts = dataLine.split("|").map(p => p.trim()).filter(p => p);
           if (parts.length >= 3) {
-            ledger = parts[1]; // Location column
-            ledgerUrl = parts[2]; // URL column
-            break;
+            tableRows.push({
+              ledger: parts[1], // Location column
+              ledgerUrl: parts[2] // URL column
+            });
           }
+        } else if (dataLine === "" || !dataLine.includes("|")) {
+          // End of table
+          break;
         }
       }
+
+      // Prioritize Candy Production entries, then fall back to first entry
+      const candyRow = tableRows.find(row =>
+        row.ledger.toLowerCase().includes('candy') &&
+        row.ledger.toLowerCase().includes('prod')
+      );
+
+      if (candyRow) {
+        ledger = candyRow.ledger;
+        ledgerUrl = candyRow.ledgerUrl;
+      } else if (tableRows.length > 0) {
+        ledger = tableRows[0].ledger;
+        ledgerUrl = tableRows[0].ledgerUrl;
+      }
+
       break;
     }
   }
@@ -267,6 +291,7 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{ ledger?: s
 
     const response = await fetch(readmeUrl);
     if (!response.ok) {
+      console.warn(`README not found for ${ocabundle}: ${response.status} ${response.statusText}`);
       const emptyResult = {};
       readmeCache.set(ocabundle, emptyResult);
       return emptyResult;
@@ -275,10 +300,17 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{ ledger?: s
     const readmeContent = await response.text();
     const ledgerInfo = extractLedgerFromReadme(readmeContent);
 
+    if (!ledgerInfo.ledger) {
+      console.warn(`No ledger info extracted from README: ${readmeUrl}`);
+    } else {
+      console.log(`Found ledger info for ${ocabundle}: ${ledgerInfo.ledger}`);
+    }
+
     // Cache the result
     readmeCache.set(ocabundle, ledgerInfo);
     return ledgerInfo;
   } catch (error) {
+    console.error(`Error fetching README for ${ocabundle}:`, error);
     const emptyResult = {};
     readmeCache.set(ocabundle, emptyResult);
     return emptyResult;
