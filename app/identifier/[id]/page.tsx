@@ -52,12 +52,18 @@ export default async function Page({ params }: { params: { id: string } }) {
   try {
     // Use the same data fetching logic as generateStaticParams to ensure consistency
     const bundles = await fetchOverlayBundleList();
-    const option = bundles.find((bundle) => bundle.ids.includes(id));
+
+    // Try to find the bundle by checking both the ids array and the individual bundle id
+    const option = bundles.find((bundle) => {
+      // Check if the decoded ID matches any ID in the bundle's ids array
+      return bundle.ids.includes(id);
+    });
 
     if (!option) {
       console.warn(`Bundle not found for ID: ${id}`);
-      // For known IDs that don't exist, this might be a data inconsistency
-      // Log it but still show not found
+      // Log available IDs for debugging
+      const availableIds = bundles.flatMap(b => b.ids).slice(0, 5);
+      console.warn(`Available IDs (first 5): ${availableIds.join(', ')}`);
       notFound();
     }
 
