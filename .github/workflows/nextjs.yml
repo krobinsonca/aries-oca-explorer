@@ -27,7 +27,7 @@ concurrency:
 jobs:
   # Build job
   build:
-    if: ((github.repository == vars.REPOSITORY) || (github.repository == 'bcgov/aries-oca-explorer') || (github.repository == 'krobinsonca/aries-oca-explorer'))
+    if: ((github.repository == vars.REPOSITORY) || (github.repository == 'bcgov/aries-oca-explorer'))
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
