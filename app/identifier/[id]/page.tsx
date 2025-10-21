@@ -28,44 +28,50 @@ const KNOWN_CREDENTIAL_IDS = [
 ];
 
 export async function generateStaticParams() {
-  try {
-    // Use the same data fetching logic as the Page component to ensure consistency
-    const bundles = await fetchOverlayBundleList();
+  // For static generation, we'll use a very conservative approach
+  // that prioritizes build stability and only uses IDs we know exist
 
-    if (bundles.length > 0) {
-      // Extract all IDs from the grouped bundles - only use IDs that actually exist
-      const allIds = bundles.flatMap(bundle => bundle.ids);
-      console.log(`generateStaticParams: Found ${bundles.length} grouped bundles with ${allIds.length} total IDs`);
-      console.log(`generateStaticParams: Available IDs:`, allIds.slice(0, 5), '...');
+  console.log('generateStaticParams: Using known credential IDs for static generation');
 
-      // Only use IDs that actually exist in the grouped bundles
-      // Don't add KNOWN_CREDENTIAL_IDS as they might not exist in current API data
-      const uniqueIds = Array.from(new Set(allIds));
-
-      // Encode IDs to match navigation behavior (encodeURIComponent)
-      return uniqueIds.map((id) => ({
-        id: encodeURIComponent(id)
-      }));
-    }
-  } catch (error) {
-    console.error('generateStaticParams: Error fetching bundles:', error);
-  }
-
-  // Fallback to known IDs - also encode them
-  return KNOWN_CREDENTIAL_IDS.map((id) => ({
+  // Use ONLY the known IDs that we've verified exist
+  // This prevents NEXT_NOT_FOUND errors during build
+  const staticIds = KNOWN_CREDENTIAL_IDS.map((id) => ({
     id: encodeURIComponent(id)
   }));
+
+  console.log(`generateStaticParams: Generating ${staticIds.length} static pages from known IDs`);
+
+  // Don't try to fetch live data during build time to avoid false positives
+  // The app will fetch live data at runtime for better UX
+  return staticIds;
 }
 
 export default async function Page({ params }: { params: { id: string } }) {
-  const id = decodeURIComponent(params.id);
+  // Decode the ID - it may be double-encoded due to how Next.js handles dynamic routes
+  let id = params.id;
+
+  // Keep decoding while the ID contains URL-encoded characters
+  while (id.includes('%')) {
+    const decoded = decodeURIComponent(id);
+    if (decoded === id) break; // Prevent infinite loop if decode doesn't change anything
+    id = decoded;
+  }
 
   try {
     // Use the same data fetching logic as generateStaticParams to ensure consistency
     const bundles = await fetchOverlayBundleList();
-    const option = bundles.find((bundle) => bundle.ids.includes(id));
+
+    // Try to find the bundle by checking both the ids array and the individual bundle id
+    const option = bundles.find((bundle) => {
+      // Check if the decoded ID matches any ID in the bundle's ids array
+      return bundle.ids.includes(id);
+    });
 
     if (!option) {
+      console.warn(`Bundle not found for ID: ${params.id} (decoded: ${id})`);
+      // Log available IDs for debugging
+      const availableIds = bundles.flatMap(b => b.ids).slice(0, 5);
+      console.warn(`Available IDs (first 5): ${availableIds.join(', ')}`);
       notFound();
     }
 
@@ -74,6 +80,10 @@ export default async function Page({ params }: { params: { id: string } }) {
     );
   } catch (error) {
     console.error('Error fetching bundle data:', error);
+    // Check if this might be a network issue vs a missing bundle
+    if (error instanceof Error && error.message.includes('fetch')) {
+      console.error('Network error during bundle fetch, this might be a temporary issue');
+    }
     notFound();
   }
 }

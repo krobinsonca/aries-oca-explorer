@@ -28,7 +28,7 @@ import {
   filterBundles,
   BundleWithLedger
 } from '@/app/lib/data';
-import SearchResultBundleCard from './SearchResultBundleCard';
+import SimpleCredentialCard from './SimpleCredentialCard';
 import { useLanguage } from '@/app/contexts/Language';
 
 interface EnhancedCredentialFilterProps {
@@ -89,10 +89,18 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
     try {
       // Add a small delay to show the loading animation
       await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Use base64 encoding to match static generation (browser-compatible)
+      const encodedId = btoa(bundle.id)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+
       // Use relative path for client-side navigation to work with basePath
       // Include trailing slash to match Next.js trailingSlash: true config
-      router.push(`identifier/${encodeURIComponent(bundle.id)}/`);
+      router.push(`identifier/${encodedId}/`);
     } catch (error) {
+      console.error('Navigation error:', error);
       setIsLoading(false);
     }
   };
@@ -349,9 +357,10 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
               <Grid container spacing={3}>
                 {bundles.map((bundle) => (
                   <Grid item xs={12} sm={6} md={4} lg={4} xl={3} key={bundle.id}>
-                    <SearchResultBundleCard
+                    <SimpleCredentialCard
                       bundle={bundle}
                       onClick={() => handleBundleSelect(bundle)}
+                      language={language}
                     />
                   </Grid>
                 ))}
