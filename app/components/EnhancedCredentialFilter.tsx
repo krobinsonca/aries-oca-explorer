@@ -90,11 +90,8 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
       // Add a small delay to show the loading animation
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      // Use base64 encoding to match static generation (browser-compatible)
-      const encodedId = btoa(bundle.id)
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '');
+      // Use URL encoding to match static generation and server output
+      const encodedId = encodeURIComponent(bundle.id);
 
       // Use relative path for client-side navigation to work with basePath
       // Include trailing slash to match Next.js trailingSlash: true config
