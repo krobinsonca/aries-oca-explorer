@@ -133,16 +133,7 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
         </Box>
       </Backdrop>
 
-      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          OCA Bundle Explorer
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Explore and filter through available credential bundles. Search by name or description,
-          or filter by ledger network.
-        </Typography>
-
-        {/* Filter Controls */}
+      {/* Filter Controls */}
         <Paper
           elevation={1}
           sx={{
