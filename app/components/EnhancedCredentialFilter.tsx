@@ -133,25 +133,16 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
         </Box>
       </Backdrop>
 
-      <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          OCA Bundle Explorer
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Explore and filter through available credential bundles. Search by name or description,
-          or filter by ledger network.
-        </Typography>
-
-        {/* Filter Controls */}
-        <Paper
-          elevation={1}
-          sx={{
-            p: 3,
-            mb: 3,
-            backgroundColor: 'background.paper',
-            borderRadius: 2
-          }}
-        >
+      {/* Filter Controls */}
+      <Paper
+        elevation={1}
+        sx={{
+          p: 3,
+          mb: 3,
+          backgroundColor: 'background.paper',
+          borderRadius: 2
+        }}
+      >
 
           <Grid container spacing={3} alignItems="flex-start">
             {/* Search Field */}
@@ -318,7 +309,6 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
           {filteredBundles.length} bundle{filteredBundles.length !== 1 ? 's' : ''} found
           {hasActiveFilters && ` (filtered from ${options.length} total)`}
         </Typography>
-      </Paper>
 
       {/* Results */}
       {filteredBundles.length === 0 ? (
