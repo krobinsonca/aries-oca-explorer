@@ -3,9 +3,9 @@ import OverlayBundleView from "@/app/components/OverlayBundleView";
 import { fetchOverlayBundleList, BUNDLE_LIST_URL, BUNDLE_LIST_FILE } from "@/app/lib/data";
 import { notFound } from "next/navigation";
 
-// Pre-defined list of known credential IDs for static generation
-const KNOWN_CREDENTIAL_IDS = [
-  // Real credential IDs from the API (updated to match actual data)
+// Pre-defined list of known credential IDs as fallback
+// These are kept as a safety net if API fetch fails during build
+const FALLBACK_CREDENTIAL_IDS = [
   '4WW6792ksq62UroZyfd6nQ:3:CL:1098:SpecialEventServer',
   'YWnESLB4SH275SMNvaJJ1L:2:Rental Property Business Licence:1.0',
   'YWnESLB4SH275SMNvaJJ1L:3:CL:38195:Rental Property Business Licence',
@@ -25,36 +25,57 @@ const KNOWN_CREDENTIAL_IDS = [
   'Ttmj1pEotg8FbKZZD81S7i:3:CL:184:SpecialEventServer',
   'QzLYGuAebsy3MXQ6b1sFiT:3:CL:2351:lawyer',
   'RCnz8GcyZ2iH7VFr5zGb9N:3:CL:35170:Lawyer Credential',
+  'RGjWbW1eycP7FrMf4QJvX8:3:CL:13:Person',
 ];
 
 export async function generateStaticParams() {
-  // For static generation, we'll use a very conservative approach
-  // that prioritizes build stability and only uses IDs we know exist
+  // Fetch ALL credential IDs from the API during build to generate static pages
+  // This ensures all credential detail pages exist for GitHub Pages static export
+  
+  console.log('generateStaticParams: Fetching credential IDs from API for static generation');
 
-  console.log('generateStaticParams: Using known credential IDs for static generation');
+  try {
+    const bundles = await fetchOverlayBundleList();
+    
+    // Extract all unique credential IDs from all bundles
+    const allIds = new Set<string>();
+    bundles.forEach(bundle => {
+      bundle.ids.forEach(id => allIds.add(id));
+    });
 
-  // Use ONLY the known IDs that we've verified exist
-  // This prevents NEXT_NOT_FOUND errors during build
-  const staticIds = KNOWN_CREDENTIAL_IDS.map((id) => ({
-    id: encodeURIComponent(id)
-  }));
+    // Return raw IDs - Next.js will handle URL encoding automatically
+    // This matches Next.js best practices for generateStaticParams
+    const staticIds = Array.from(allIds).map((id) => ({
+      id: id
+    }));
 
-  console.log(`generateStaticParams: Generating ${staticIds.length} static pages from known IDs`);
-
-  // Don't try to fetch live data during build time to avoid false positives
-  // The app will fetch live data at runtime for better UX
-  return staticIds;
+    console.log(`generateStaticParams: Generating ${staticIds.length} static pages from API data`);
+    return staticIds;
+  } catch (error) {
+    console.warn('generateStaticParams: Failed to fetch from API, using fallback IDs:', error);
+    // Fallback to known IDs if API fetch fails during build
+    // Return raw IDs - Next.js will handle URL encoding automatically
+    const staticIds = FALLBACK_CREDENTIAL_IDS.map((id) => ({
+      id: id
+    }));
+    console.log(`generateStaticParams: Using ${staticIds.length} fallback credential IDs`);
+    return staticIds;
+  }
 }
 
 export default async function Page({ params }: { params: { id: string } }) {
-  // Decode the ID - it may be double-encoded due to how Next.js handles dynamic routes
+  // Next.js automatically decodes URL-encoded params
+  // The id should already be decoded, but handle edge cases
   let id = params.id;
-
-  // Keep decoding while the ID contains URL-encoded characters
-  while (id.includes('%')) {
-    const decoded = decodeURIComponent(id);
-    if (decoded === id) break; // Prevent infinite loop if decode doesn't change anything
-    id = decoded;
+  
+  // Decode if still encoded (shouldn't happen, but safety check)
+  if (id.includes('%')) {
+    try {
+      id = decodeURIComponent(id);
+    } catch (e) {
+      // If decode fails, use as-is
+      console.warn('Failed to decode ID:', id);
+    }
   }
 
   try {
