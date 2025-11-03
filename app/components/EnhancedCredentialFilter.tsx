@@ -90,12 +90,10 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
       // Add a small delay to show the loading animation
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      // Use URL encoding to match static generation and server output
-      const encodedId = encodeURIComponent(bundle.id);
-
       // Use relative path for client-side navigation to work with basePath
       // Include trailing slash to match Next.js trailingSlash: true config
-      router.push(`identifier/${encodedId}/`);
+      // Next.js router will handle URL encoding automatically
+      router.push(`identifier/${bundle.id}/`);
     } catch (error) {
       console.error('Navigation error:', error);
       setIsLoading(false);

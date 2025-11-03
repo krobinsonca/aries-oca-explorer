@@ -21,7 +21,8 @@ export default function OverlayBundleForm({ options }: { options: any[] }) {
     const option = JSON.parse(value);
     setOption(option);
     // Include trailing slash to match Next.js trailingSlash: true config
-    push(`identifier/${encodeURIComponent(option.id)}/`);
+    // Next.js router will handle URL encoding automatically
+    push(`identifier/${option.id}/`);
   };
 
   return (
