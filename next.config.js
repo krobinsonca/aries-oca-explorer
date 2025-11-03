@@ -2,11 +2,25 @@ const webpack = require('webpack');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    output: 'export',
+    // Only use static export in production (allows API routes/rewrites in dev)
+    ...(process.env.NODE_ENV === 'production' && { output: 'export' }),
     trailingSlash: true,
     // Disable image optimization for static export
     images: {
         unoptimized: true,
+    },
+    // Rewrites for API proxying (works in dev mode)
+    async rewrites() {
+        // Only use rewrites in development (not for static export)
+        if (process.env.NODE_ENV === 'development') {
+            return [
+                {
+                    source: '/api/candyscan/transactions/:path*',
+                    destination: 'https://candyscan.idlab.org/txs/:path*',
+                },
+            ];
+        }
+        return [];
     },
     // Only use basePath and assetPrefix in production (for GitHub Pages)
     ...(process.env.NODE_ENV === 'production' && {
