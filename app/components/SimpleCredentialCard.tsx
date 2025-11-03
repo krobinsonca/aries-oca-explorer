@@ -243,12 +243,17 @@ function SimpleCredentialCardWithBranding({ bundle, onClick, language = 'en' }: 
   const [overlay, setOverlay] = useState<OverlayBundle | null>(null);
   const [mockRecord, setMockRecord] = useState<CredentialExchangeRecord | null>(null);
   const [watermarkText, setWatermarkText] = useState<string | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadOverlay = async () => {
       try {
+        setIsLoading(true);
+        setError(null);
+
         const result = await fetchOverlayBundleData(bundle, { includeTestData: false });
 
         if (!isMounted) return;
@@ -259,10 +264,17 @@ function SimpleCredentialCardWithBranding({ bundle, onClick, language = 'en' }: 
           // Create credential record for rendering
           const record = createCredentialRecord(result.overlay, bundle, result.data);
           setMockRecord(record);
+        } else {
+          setError('No overlay data');
         }
       } catch (err) {
         if (!isMounted) return;
         console.error('Error loading overlay:', err);
+        setError(`Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -272,6 +284,49 @@ function SimpleCredentialCardWithBranding({ bundle, onClick, language = 'en' }: 
       isMounted = false;
     };
   }, [bundle]);
+
+  // Show error state with fallback card info
+  if (error) {
+    return (
+      <Box
+        sx={{
+          cursor: 'pointer',
+          display: 'inline-block',
+          transition: 'transform 0.2s, box-shadow 0.2s',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
+          }
+        }}
+        onClick={onClick}
+      >
+        <Box
+          sx={{
+            border: 1,
+            borderColor: 'error.main',
+            borderRadius: 1,
+            backgroundColor: 'background.paper',
+            p: 2,
+            minHeight: 200,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center'
+          }}
+        >
+          <Typography variant="h6" color="error" gutterBottom>
+            {bundle.name || bundle.id}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            {bundle.org}
+          </Typography>
+          <Typography variant="caption" color="error">
+            {error}
+          </Typography>
+        </Box>
+        <GroupedIdDisplay ids={bundle.ids || [bundle.id]} ledgerNormalized={bundle.ledgerNormalized} />
+      </Box>
+    );
+  }
 
   return (
     <>

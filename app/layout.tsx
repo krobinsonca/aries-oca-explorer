@@ -1,11 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import '@/app/globals.css';
-import { StyledEngineProvider } from "@mui/material/styles";
-import { ThemeProvider } from '@/app/contexts/Theme';
-import { LanguageProvider } from '@/app/contexts/Language';
-import ThemeWrapper from '@/app/components/ThemeWrapper';
-import ThemeClassProvider from '@/app/components/ThemeClassProvider';
+import ClientProviders from '@/app/components/ClientProviders';
 import Header from '@/app/components/Header';
 import { bcSans } from '@/app/fonts';
 
@@ -28,19 +24,12 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
-        <ThemeProvider>
-          <LanguageProvider>
-            <ThemeClassProvider />
-            <StyledEngineProvider injectFirst>
-              <ThemeWrapper>
-                <Header />
-                <main id="main-content" className='app min-h-screen' style={{ paddingTop: '64px' }}>
-                  {children}
-                </main>
-              </ThemeWrapper>
-            </StyledEngineProvider>
-          </LanguageProvider>
-        </ThemeProvider>
+        <ClientProviders>
+          <Header />
+          <main id="main-content" className='app min-h-screen' style={{ paddingTop: '64px' }}>
+            {children}
+          </main>
+        </ClientProviders>
       </body>
     </html>
   );
