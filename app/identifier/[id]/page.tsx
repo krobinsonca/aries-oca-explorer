@@ -31,12 +31,12 @@ const FALLBACK_CREDENTIAL_IDS = [
 export async function generateStaticParams() {
   // Fetch ALL credential IDs from the API during build to generate static pages
   // This ensures all credential detail pages exist for GitHub Pages static export
-  
+
   console.log('generateStaticParams: Fetching credential IDs from API for static generation');
 
   try {
     const bundles = await fetchOverlayBundleList();
-    
+
     // Extract all unique credential IDs from all bundles
     const allIds = new Set<string>();
     bundles.forEach(bundle => {
@@ -67,7 +67,7 @@ export default async function Page({ params }: { params: { id: string } }) {
   // Next.js automatically decodes URL-encoded params
   // The id should already be decoded, but handle edge cases
   let id = params.id;
-  
+
   // Decode if still encoded (shouldn't happen, but safety check)
   if (id.includes('%')) {
     try {
