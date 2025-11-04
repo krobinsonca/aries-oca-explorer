@@ -35,7 +35,11 @@ export interface BundleFilters {
 }
 
 // Cache for README content to avoid repeated fetches
-const readmeCache = new Map<string, { ledger?: string; ledgerUrl?: string }>();
+const readmeCache = new Map<string, {
+  ledger?: string;
+  ledgerUrl?: string;
+  ledgerMap?: Map<string, { ledger: string; ledgerUrl?: string }>;
+}>();
 
 // Normalize ledger value for consistent filtering
 export function normalizeLedgerValue(ledger: string | undefined): string {
@@ -201,10 +205,16 @@ export function constructExplorerUrl(
 }
 
 // Extract ledger information from README content
-export function extractLedgerFromReadme(readmeContent: string): { ledger?: string; ledgerUrl?: string } {
+// Returns a map of schema IDs to their ledger info, plus a default (first entry)
+export function extractLedgerFromReadme(readmeContent: string): {
+  ledger?: string;
+  ledgerUrl?: string;
+  ledgerMap?: Map<string, { ledger: string; ledgerUrl?: string }>;
+} {
   const lines = readmeContent.split("\n");
   let ledger: string | undefined;
   let ledgerUrl: string | undefined;
+  const ledgerMap = new Map<string, { ledger: string; ledgerUrl?: string }>();
 
   // Look for the table header and extract ledger info
   for (let i = 0; i < lines.length; i++) {
@@ -212,16 +222,29 @@ export function extractLedgerFromReadme(readmeContent: string): { ledger?: strin
 
     // Check if this line contains the table header
     if (line.includes("| Identifier") && line.includes("| Location") && line.includes("| URL")) {
-      // Look for the next non-empty line after the separator line
+      // Look for all data rows after the separator line
       for (let j = i + 2; j < lines.length; j++) {
         const dataLine = lines[j].trim();
+        // Stop if we hit another table or section
+        if (dataLine.startsWith('##') || (dataLine.includes("|") && dataLine.includes("---"))) {
+          break;
+        }
         if (dataLine && dataLine.includes("|") && !dataLine.includes("---")) {
-          // Parse the table row
+          // Parse the table row: Identifier | Location | URL
           const parts = dataLine.split("|").map(p => p.trim()).filter(p => p);
           if (parts.length >= 3) {
-            ledger = parts[1]; // Location column
-            ledgerUrl = parts[2]; // URL column
-            break;
+            const identifier = parts[0];
+            const location = parts[1];
+            const url = parts[2];
+
+            // Store in map for this specific identifier
+            ledgerMap.set(identifier, { ledger: location, ledgerUrl: url });
+
+            // Use first entry as default
+            if (!ledger) {
+              ledger = location;
+              ledgerUrl = url;
+            }
           }
         }
       }
@@ -229,11 +252,15 @@ export function extractLedgerFromReadme(readmeContent: string): { ledger?: strin
     }
   }
 
-  return { ledger, ledgerUrl };
+  return { ledger, ledgerUrl, ledgerMap: ledgerMap.size > 0 ? ledgerMap : undefined };
 }
 
 // Fetch README for a specific schema to get ledger information
-export async function fetchSchemaReadme(ocabundle: string): Promise<{ ledger?: string; ledgerUrl?: string }> {
+export async function fetchSchemaReadme(ocabundle: string): Promise<{
+  ledger?: string;
+  ledgerUrl?: string;
+  ledgerMap?: Map<string, { ledger: string; ledgerUrl?: string }>;
+}> {
   // Check cache first
   if (readmeCache.has(ocabundle)) {
     return readmeCache.get(ocabundle)!;
@@ -328,37 +355,118 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
     for (let i = 0; i < bundleGroups.length; i += batchSize) {
       const batch = bundleGroups.slice(i, i + batchSize);
 
-      const batchPromises = batch.map(async (bundle: any): Promise<BundleWithLedger> => {
+      const batchPromises = batch.map(async (bundle: any): Promise<BundleWithLedger[]> => {
         try {
           const ledgerInfo = await fetchSchemaReadme(bundle.ocabundle);
 
-          // Normalize ledger value and create display name
-          const ledgerNormalized = ledgerInfo.ledger ? normalizeLedgerValue(ledgerInfo.ledger) : undefined;
-          const ledgerDisplayName = ledgerInfo.ledger ? getLedgerDisplayName(ledgerInfo.ledger) : undefined;
-          const explorerUrl = ledgerInfo.ledgerUrl;
+          // If we have a ledgerMap with multiple entries, group IDs by ledger
+          // This creates separate bundle entries for each ledger (ocabundle + ledger = unique)
+          if (ledgerInfo.ledgerMap && ledgerInfo.ledgerMap.size > 0) {
+            // Group IDs by their ledger (normalized)
+            const ledgerGroups = new Map<string, {
+              ids: string[];
+              ledger: string;
+              ledgerUrl?: string;
+            }>();
 
-          return {
-            ...bundle,
-            ledger: ledgerInfo.ledger,
-            ledgerUrl: explorerUrl,
-            ledgerDisplayName: ledgerDisplayName,
-            ledgerNormalized: ledgerNormalized
-          };
+            for (const id of bundle.ids) {
+              const idLedgerInfo = ledgerInfo.ledgerMap.get(id);
+              if (idLedgerInfo) {
+                const ledgerKey = normalizeLedgerValue(idLedgerInfo.ledger);
+                if (!ledgerGroups.has(ledgerKey)) {
+                  ledgerGroups.set(ledgerKey, {
+                    ids: [],
+                    ledger: idLedgerInfo.ledger,
+                    ledgerUrl: idLedgerInfo.ledgerUrl
+                  });
+                }
+                ledgerGroups.get(ledgerKey)!.ids.push(id);
+              } else {
+                // IDs without specific ledger mapping go to default ledger
+                const defaultLedger = ledgerInfo.ledger || 'unknown';
+                const defaultKey = normalizeLedgerValue(defaultLedger);
+                if (!ledgerGroups.has(defaultKey)) {
+                  ledgerGroups.set(defaultKey, {
+                    ids: [],
+                    ledger: defaultLedger,
+                    ledgerUrl: ledgerInfo.ledgerUrl
+                  });
+                }
+                ledgerGroups.get(defaultKey)!.ids.push(id);
+              }
+            }
+
+            // Create separate bundle entries for each ledger (ocabundle + ledger = unique)
+            const bundles: BundleWithLedger[] = [];
+            Array.from(ledgerGroups.entries()).forEach(([ledgerKey, ledgerData]) => {
+              const ledgerNormalized = ledgerKey;
+              const ledgerDisplayName = getLedgerDisplayName(ledgerData.ledger);
+
+              // Use the first ID as the primary ID (prefer schema ID over cred def if available)
+              const schemaIds = ledgerData.ids.filter(id => id.includes(':2:'));
+              const primaryId = schemaIds.length > 0 ? schemaIds[0] : ledgerData.ids[0];
+
+              bundles.push({
+                ...bundle,
+                id: primaryId, // Primary ID for this ledger
+                ids: ledgerData.ids, // All IDs for this ocabundle + ledger combination
+                ledger: ledgerData.ledger,
+                ledgerUrl: ledgerData.ledgerUrl,
+                ledgerDisplayName: ledgerDisplayName,
+                ledgerNormalized: ledgerNormalized
+              });
+            });
+
+            return bundles.length > 0 ? bundles : [{
+              ...bundle,
+              ledger: ledgerInfo.ledger,
+              ledgerUrl: ledgerInfo.ledgerUrl,
+              ledgerDisplayName: ledgerInfo.ledger ? getLedgerDisplayName(ledgerInfo.ledger) : undefined,
+              ledgerNormalized: ledgerInfo.ledger ? normalizeLedgerValue(ledgerInfo.ledger) : undefined
+            }];
+          } else {
+            // Single ledger entry - keep all IDs together
+            const ledgerNormalized = ledgerInfo.ledger ? normalizeLedgerValue(ledgerInfo.ledger) : undefined;
+            const ledgerDisplayName = ledgerInfo.ledger ? getLedgerDisplayName(ledgerInfo.ledger) : undefined;
+            const explorerUrl = ledgerInfo.ledgerUrl;
+
+            // Use first schema ID as primary if available, otherwise first ID
+            const schemaIds = bundle.ids.filter((id: string) => id.includes(':2:'));
+            const primaryId = schemaIds.length > 0 ? schemaIds[0] : bundle.ids[0];
+
+            return [{
+              ...bundle,
+              id: primaryId, // Primary ID
+              ids: bundle.ids, // All IDs for this bundle
+              ledger: ledgerInfo.ledger,
+              ledgerUrl: explorerUrl,
+              ledgerDisplayName: ledgerDisplayName,
+              ledgerNormalized: ledgerNormalized
+            }];
+          }
         } catch (error) {
           // If README fetch fails, return bundle without ledger info
           console.warn(`Failed to fetch ledger info for ${bundle.ocabundle}:`, error);
-          return {
+
+          // Use first schema ID as primary if available
+          const schemaIds = bundle.ids.filter((id: string) => id.includes(':2:'));
+          const primaryId = schemaIds.length > 0 ? schemaIds[0] : bundle.ids[0];
+
+          return [{
             ...bundle,
+            id: primaryId,
+            ids: bundle.ids, // Keep all IDs even without ledger info
             ledger: undefined,
             ledgerUrl: undefined,
             ledgerDisplayName: undefined,
             ledgerNormalized: undefined
-          };
+          }];
         }
       });
 
       const batchResults = await Promise.all(batchPromises);
-      enhancedBundles.push(...batchResults);
+      // Flatten the results (each promise can return multiple bundles now)
+      enhancedBundles.push(...batchResults.flat());
 
       // Add a longer delay between batches to be more respectful to GitHub's API
       if (i + batchSize < bundleGroups.length) {
@@ -644,4 +752,24 @@ export function filterBundles(bundles: BundleWithLedger[], filters: BundleFilter
 
     return true;
   });
+}
+
+// Extract schema name from schema ID
+// Format: DID:2:SchemaName:Version
+export function extractSchemaNameFromId(schemaId: string): string | undefined {
+  const parts = schemaId.split(':');
+  if (parts.length >= 3 && parts[1] === '2') {
+    return parts[2];
+  }
+  return undefined;
+}
+
+// Extract schema name from credential definition ID
+// Format: DID:3:CL:SeqNo:SchemaName
+export function extractSchemaNameFromCredDefId(credDefId: string): string | undefined {
+  const parts = credDefId.split(':');
+  if (parts.length >= 5 && parts[1] === '3' && parts[2] === 'CL') {
+    return parts[4];
+  }
+  return undefined;
 }

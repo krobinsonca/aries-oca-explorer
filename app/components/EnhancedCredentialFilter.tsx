@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Paper,
   Typography,
@@ -19,6 +19,7 @@ import {
   AccordionDetails,
   Chip,
   IconButton,
+  Divider,
 } from '@mui/material';
 import { Clear, ExpandMore, Launch } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
@@ -26,7 +27,7 @@ import {
   groupBundlesByLedger,
   getAvailableLedgerOptions,
   filterBundles,
-  BundleWithLedger
+  BundleWithLedger,
 } from '@/app/lib/data';
 import SimpleCredentialCard from './SimpleCredentialCard';
 import { useLanguage } from '@/app/contexts/Language';
@@ -78,6 +79,7 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
       return nameA.localeCompare(nameB);
     });
   }, [options, selectedLedger, searchTerm]);
+
 
   // Group filtered bundles by ledger for display
   const filteredGroupedBundles = useMemo(() => {
@@ -310,7 +312,7 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
           {hasActiveFilters && ` (filtered from ${options.length} total)`}
         </Typography>
 
-      {/* Results */}
+      {/* OCA Bundle Results */}
       {filteredBundles.length === 0 ? (
         <Paper elevation={1} sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h6" color="text.secondary">
@@ -321,38 +323,44 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
           </Typography>
         </Paper>
       ) : (
-        Object.entries(filteredGroupedBundles).map(([ledger, bundles]) => (
-          <Accordion key={ledger} defaultExpanded sx={{ mb: 2 }}>
-            <AccordionSummary
-              expandIcon={<ExpandMore />}
-              aria-controls={`${ledger}-content`}
-              id={`${ledger}-header`}
-            >
-              <Typography variant="h6" component="div">
-                {bundles[0]?.ledgerDisplayName || ledger || 'Unknown Ledger'}
-                <Chip
-                  label={bundles.length}
-                  size="small"
-                  sx={{ ml: 2 }}
-                  color="primary"
-                />
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Grid container spacing={3}>
-                {bundles.map((bundle) => (
-                  <Grid item xs={12} sm={6} md={4} lg={4} xl={3} key={bundle.id}>
-                    <SimpleCredentialCard
-                      bundle={bundle}
-                      onClick={() => handleBundleSelect(bundle)}
-                      language={language}
-                    />
-                  </Grid>
-                ))}
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
-        ))
+        <>
+          {filteredBundles.length > 0 && (
+            <>
+              {Object.entries(filteredGroupedBundles).map(([ledger, bundles]) => (
+                <Accordion key={ledger} defaultExpanded sx={{ mb: 2 }}>
+                  <AccordionSummary
+                    expandIcon={<ExpandMore />}
+                    aria-controls={`${ledger}-content`}
+                    id={`${ledger}-header`}
+                  >
+                    <Typography variant="h6" component="div">
+                      {bundles[0]?.ledgerDisplayName || ledger || 'Unknown Ledger'}
+                      <Chip
+                        label={bundles.length}
+                        size="small"
+                        sx={{ ml: 2 }}
+                        color="primary"
+                      />
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Grid container spacing={3}>
+                      {bundles.map((bundle) => (
+                        <Grid item xs={12} sm={6} md={4} lg={4} xl={3} key={bundle.id}>
+                          <SimpleCredentialCard
+                            bundle={bundle}
+                            onClick={() => handleBundleSelect(bundle)}
+                            language={language}
+                          />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </>
+          )}
+        </>
       )}
     </Box>
   );
