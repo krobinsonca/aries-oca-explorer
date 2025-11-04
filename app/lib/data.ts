@@ -788,23 +788,3 @@ export function extractSchemaNameFromCredDefId(credDefId: string): string | unde
   }
   return undefined;
 }
-
-// Extract schema name from schema ID
-// Format: DID:2:SchemaName:Version
-export function extractSchemaNameFromId(schemaId: string): string | undefined {
-  const parts = schemaId.split(':');
-  if (parts.length >= 3 && parts[1] === '2') {
-    return parts[2];
-  }
-  return undefined;
-}
-
-// Extract schema name from credential definition ID
-// Format: DID:3:CL:SeqNo:SchemaName
-export function extractSchemaNameFromCredDefId(credDefId: string): string | undefined {
-  const parts = credDefId.split(':');
-  if (parts.length >= 5 && parts[1] === '3' && parts[2] === 'CL') {
-    return parts[4];
-  }
-  return undefined;
-}
