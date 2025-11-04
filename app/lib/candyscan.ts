@@ -37,7 +37,7 @@ export async function fetchCandyscanTransactions(
 ): Promise<{ transactions: LedgerTransaction[]; hasMore: boolean }> {
   const cacheKey = `${network}-${page}-${pageSize}`;
   const cached = candyscanCache.get(cacheKey);
-  
+
   // Return cached data if still valid
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
     return cached.data;
@@ -59,7 +59,7 @@ export async function fetchCandyscanTransactions(
     }
 
     const data = await response.json();
-    
+
     // Our API route returns { transactions: [...] }
     // Handle both our API format and potential direct candyscan responses
     let transactions: any[] = [];
@@ -79,7 +79,7 @@ export async function fetchCandyscanTransactions(
       // Transaction structure varies - try common fields
       let identifier = '';
       let txData: any = {};
-      
+
       if (tx.txn && tx.txn.data) {
         txData = tx.txn.data;
         // For SCHEMA: identifier is in data.name or we construct from schema ID
@@ -111,10 +111,10 @@ export async function fetchCandyscanTransactions(
     const hasMore = transactions.length === pageSize;
 
     const result = { transactions: ledgerTransactions, hasMore };
-    
+
     // Cache the result
     candyscanCache.set(cacheKey, { data: result, timestamp: Date.now() });
-    
+
     return result;
   } catch (error) {
     console.error(`Error fetching candyscan transactions for ${network}:`, error);
@@ -164,7 +164,7 @@ export async function findMissingBundles(
     try {
       // Fetch first page (may need pagination later)
       const { transactions } = await fetchCandyscanTransactions(network, 1, 50);
-      
+
       // Process each transaction
       for (const tx of transactions) {
         // Extract ID from transaction
@@ -186,7 +186,7 @@ export async function findMissingBundles(
                 version = parts[3];
               }
             }
-          } 
+          }
           // Check data for schema info
           else if (tx.data) {
             // Try to get schema name and version from data
@@ -205,7 +205,7 @@ export async function findMissingBundles(
               }
             }
           }
-          
+
           // Skip if we don't have a valid ID
           if (!id || !id.includes(':2:')) {
             continue;
@@ -219,7 +219,7 @@ export async function findMissingBundles(
             if (schemaName) {
               name = schemaName;
             }
-          } 
+          }
           // Check data.ref for cred def ID
           else if (tx.data && tx.data.ref && tx.data.ref.includes(':3:CL:')) {
             id = tx.data.ref;
@@ -237,7 +237,7 @@ export async function findMissingBundles(
           } else {
             continue;
           }
-          
+
           // Skip if we don't have a valid ID
           if (!id || !id.includes(':3:CL:')) {
             continue;

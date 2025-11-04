@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     // Create timeout controller for fetch
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    
+
     let response;
     try {
       response = await fetch(url, {
@@ -55,10 +55,10 @@ export async function GET(request: NextRequest) {
 
     // Candyscan returns HTML with JSON embedded in __NEXT_DATA__ script tag
     const html = await response.text();
-    
+
     // Extract JSON from __NEXT_DATA__ script tag
     const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">([^<]+)<\/script>/);
-    
+
     if (!nextDataMatch || !nextDataMatch[1]) {
       return NextResponse.json(
         { error: 'Could not extract transaction data from candyscan response' },
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     }
 
     const nextData = JSON.parse(nextDataMatch[1]);
-    
+
     // Extract transactions from the Next.js props
     const transactions = nextData?.props?.pageProps?.indyscanTxs || [];
 
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       const txnMetadata = tx.idata?.txnMetadata || {};
       const txn = tx.idata?.txn || {};
       const txnData = txn.data || {};
-      
+
       return {
         seqNo: txnMetadata.seqNo || 0,
         txType: txn.typeName || txn.type,

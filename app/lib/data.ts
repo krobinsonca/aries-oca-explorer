@@ -64,8 +64,8 @@ export interface MissingBundle {
 }
 
 // Cache for README content to avoid repeated fetches
-const readmeCache = new Map<string, { 
-  ledger?: string; 
+const readmeCache = new Map<string, {
+  ledger?: string;
   ledgerUrl?: string;
   ledgerMap?: Map<string, { ledger: string; ledgerUrl?: string }>;
 }>();
@@ -235,8 +235,8 @@ export function constructExplorerUrl(
 
 // Extract ledger information from README content
 // Returns a map of schema IDs to their ledger info, plus a default (first entry)
-export function extractLedgerFromReadme(readmeContent: string): { 
-  ledger?: string; 
+export function extractLedgerFromReadme(readmeContent: string): {
+  ledger?: string;
   ledgerUrl?: string;
   ledgerMap?: Map<string, { ledger: string; ledgerUrl?: string }>;
 } {
@@ -265,10 +265,10 @@ export function extractLedgerFromReadme(readmeContent: string): {
             const identifier = parts[0];
             const location = parts[1];
             const url = parts[2];
-            
+
             // Store in map for this specific identifier
             ledgerMap.set(identifier, { ledger: location, ledgerUrl: url });
-            
+
             // Use first entry as default
             if (!ledger) {
               ledger = location;
@@ -285,8 +285,8 @@ export function extractLedgerFromReadme(readmeContent: string): {
 }
 
 // Fetch README for a specific schema to get ledger information
-export async function fetchSchemaReadme(ocabundle: string): Promise<{ 
-  ledger?: string; 
+export async function fetchSchemaReadme(ocabundle: string): Promise<{
+  ledger?: string;
   ledgerUrl?: string;
   ledgerMap?: Map<string, { ledger: string; ledgerUrl?: string }>;
 }> {
@@ -397,7 +397,7 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
               ledger: string;
               ledgerUrl?: string;
             }>();
-            
+
             for (const id of bundle.ids) {
               const idLedgerInfo = ledgerInfo.ledgerMap.get(id);
               if (idLedgerInfo) {
@@ -424,17 +424,17 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
                 ledgerGroups.get(defaultKey)!.ids.push(id);
               }
             }
-            
+
             // Create separate bundle entries for each ledger (ocabundle + ledger = unique)
             const bundles: BundleWithLedger[] = [];
             for (const [ledgerKey, ledgerData] of ledgerGroups.entries()) {
               const ledgerNormalized = ledgerKey;
               const ledgerDisplayName = getLedgerDisplayName(ledgerData.ledger);
-              
+
               // Use the first ID as the primary ID (prefer schema ID over cred def if available)
               const schemaIds = ledgerData.ids.filter(id => id.includes(':2:'));
               const primaryId = schemaIds.length > 0 ? schemaIds[0] : ledgerData.ids[0];
-              
+
               bundles.push({
                 ...bundle,
                 id: primaryId, // Primary ID for this ledger
@@ -476,11 +476,11 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
         } catch (error) {
           // If README fetch fails, return bundle without ledger info
           console.warn(`Failed to fetch ledger info for ${bundle.ocabundle}:`, error);
-          
+
           // Use first schema ID as primary if available
           const schemaIds = bundle.ids.filter((id: string) => id.includes(':2:'));
           const primaryId = schemaIds.length > 0 ? schemaIds[0] : bundle.ids[0];
-          
+
           return [{
             ...bundle,
             id: primaryId,
