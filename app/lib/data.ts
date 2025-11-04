@@ -445,7 +445,7 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
                 ledgerNormalized: ledgerNormalized
               });
             }
-            
+
             return bundles.length > 0 ? bundles : [{
               ...bundle,
               ledger: ledgerInfo.ledger,
