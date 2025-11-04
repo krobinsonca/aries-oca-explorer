@@ -9,19 +9,6 @@ const nextConfig = {
     images: {
         unoptimized: true,
     },
-    // Rewrites for API proxying (works in dev mode)
-    async rewrites() {
-        // Only use rewrites in development (not for static export)
-        if (process.env.NODE_ENV === 'development') {
-            return [
-                {
-                    source: '/api/candyscan/transactions/:path*',
-                    destination: 'https://candyscan.idlab.org/txs/:path*',
-                },
-            ];
-        }
-        return [];
-    },
     // Only use basePath and assetPrefix in production (for GitHub Pages)
     ...(process.env.NODE_ENV === 'production' && {
         basePath: '/aries-oca-explorer',

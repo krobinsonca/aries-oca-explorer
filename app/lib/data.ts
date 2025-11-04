@@ -49,20 +49,6 @@ export interface LedgerTransaction {
   network: 'CANDY_DEV' | 'CANDY_TEST' | 'CANDY_PROD';
 }
 
-// Interface for schemas/credentials without OCA bundles
-export interface MissingBundle {
-  id: string; // Schema ID or Credential Definition ID
-  type: 'SCHEMA' | 'CLAIM_DEF';
-  name?: string; // Extracted from transaction data
-  version?: string; // For schemas
-  seqNo: number; // Transaction sequence number
-  txTime: number; // Transaction timestamp
-  network: 'CANDY_DEV' | 'CANDY_TEST' | 'CANDY_PROD';
-  networkNormalized: string; // Normalized network name for filtering
-  networkDisplayName: string; // User-friendly network name
-  explorerUrl?: string; // Link to candyscan explorer
-}
-
 // Cache for README content to avoid repeated fetches
 const readmeCache = new Map<string, {
   ledger?: string;
@@ -803,45 +789,22 @@ export function extractSchemaNameFromCredDefId(credDefId: string): string | unde
   return undefined;
 }
 
-// Check if a schema/credential definition ID exists in OCA bundles
-export function hasOCABundle(id: string, bundles: BundleWithLedger[]): boolean {
-  // Check if ID is in any bundle's ids array
-  return bundles.some(bundle => bundle.ids.includes(id));
+// Extract schema name from schema ID
+// Format: DID:2:SchemaName:Version
+export function extractSchemaNameFromId(schemaId: string): string | undefined {
+  const parts = schemaId.split(':');
+  if (parts.length >= 3 && parts[1] === '2') {
+    return parts[2];
+  }
+  return undefined;
 }
 
-// Match candyscan transaction IDs with OCA bundle IDs
-// Returns true if the transaction ID matches any bundle ID
-export function matchesOCABundle(transactionId: string, bundles: BundleWithLedger[]): boolean {
-  // Direct match
-  if (hasOCABundle(transactionId, bundles)) {
-    return true;
+// Extract schema name from credential definition ID
+// Format: DID:3:CL:SeqNo:SchemaName
+export function extractSchemaNameFromCredDefId(credDefId: string): string | undefined {
+  const parts = credDefId.split(':');
+  if (parts.length >= 5 && parts[1] === '3' && parts[2] === 'CL') {
+    return parts[4];
   }
-
-  // For credential definitions, also check by schema name
-  if (transactionId.includes(':3:CL:')) {
-    const schemaName = extractSchemaNameFromCredDefId(transactionId);
-    if (schemaName) {
-      // Check if any bundle has a schema or cred def with this schema name
-      return bundles.some(bundle => {
-        return bundle.ids.some(bundleId => {
-          // Check if bundle ID contains the schema name
-          return bundleId.includes(`:${schemaName}`) || bundleId.includes(`:${schemaName.toLowerCase()}`);
-        });
-      });
-    }
-  }
-
-  // For schemas, check by schema name
-  if (transactionId.includes(':2:')) {
-    const schemaName = extractSchemaNameFromId(transactionId);
-    if (schemaName) {
-      return bundles.some(bundle => {
-        return bundle.ids.some(bundleId => {
-          return bundleId.includes(`:${schemaName}`) || bundleId.includes(`:${schemaName.toLowerCase()}`);
-        });
-      });
-    }
-  }
-
-  return false;
+  return undefined;
 }

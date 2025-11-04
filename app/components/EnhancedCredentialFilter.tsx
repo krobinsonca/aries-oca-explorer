@@ -28,11 +28,8 @@ import {
   getAvailableLedgerOptions,
   filterBundles,
   BundleWithLedger,
-  MissingBundle,
 } from '@/app/lib/data';
-import { findMissingBundles } from '@/app/lib/candyscan';
 import SimpleCredentialCard from './SimpleCredentialCard';
-import TransactionCard from './TransactionCard';
 import { useLanguage } from '@/app/contexts/Language';
 
 interface EnhancedCredentialFilterProps {
@@ -43,45 +40,8 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
   const [selectedLedger, setSelectedLedger] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [missingBundles, setMissingBundles] = useState<MissingBundle[]>([]);
-  const [isLoadingMissingBundles, setIsLoadingMissingBundles] = useState(false);
   const router = useRouter();
   const { language, setLanguage } = useLanguage();
-
-  // Fetch missing bundles from candyscan (client-side only)
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchMissing = async () => {
-      setIsLoadingMissingBundles(true);
-      try {
-        const missing = await findMissingBundles(options);
-        if (isMounted) {
-          setMissingBundles(missing);
-        }
-      } catch (error) {
-        // Silently handle errors - in static export, API routes don't exist
-        // and direct CORS requests will fail, which is expected
-        console.debug('Missing bundles feature unavailable (expected in static export):', error);
-        if (isMounted) {
-          setMissingBundles([]);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoadingMissingBundles(false);
-        }
-      }
-    };
-
-    // Only fetch if we have bundles loaded
-    if (options.length > 0) {
-      fetchMissing();
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [options]);
 
   // Check if bundles have ledger information loaded
   const hasLedgerInfo = options.length > 0 && options[0].ledger !== undefined;
@@ -120,36 +80,6 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
     });
   }, [options, selectedLedger, searchTerm]);
 
-  // Filter missing bundles based on search term
-  const filteredMissingBundles = useMemo(() => {
-    if (!searchTerm) {
-      return missingBundles;
-    }
-
-    const searchLower = searchTerm.toLowerCase();
-    return missingBundles.filter(bundle => {
-      const searchFields = [
-        bundle.name || '',
-        bundle.id || '',
-        bundle.networkDisplayName || ''
-      ].map(field => field.toLowerCase());
-
-      return searchFields.some(field => field.includes(searchLower));
-    });
-  }, [missingBundles, searchTerm]);
-
-  // Group missing bundles by network
-  const groupedMissingBundles = useMemo(() => {
-    const grouped: Record<string, MissingBundle[]> = {};
-    filteredMissingBundles.forEach(bundle => {
-      const key = bundle.networkNormalized;
-      if (!grouped[key]) {
-        grouped[key] = [];
-      }
-      grouped[key].push(bundle);
-    });
-    return grouped;
-  }, [filteredMissingBundles]);
 
   // Group filtered bundles by ledger for display
   const filteredGroupedBundles = useMemo(() => {
@@ -383,7 +313,7 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
         </Typography>
 
       {/* OCA Bundle Results */}
-      {filteredBundles.length === 0 && filteredMissingBundles.length === 0 ? (
+      {filteredBundles.length === 0 ? (
         <Paper elevation={1} sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h6" color="text.secondary">
             No bundles found
@@ -422,56 +352,6 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
                             onClick={() => handleBundleSelect(bundle)}
                             language={language}
                           />
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </AccordionDetails>
-                </Accordion>
-              ))}
-            </>
-          )}
-
-          {/* Missing Bundles Section */}
-          {filteredMissingBundles.length > 0 && (
-            <>
-              <Divider sx={{ my: 4 }} />
-              <Paper elevation={1} sx={{ p: 3, mb: 2, backgroundColor: 'background.default' }}>
-                <Typography variant="h5" component="h2" gutterBottom>
-                  Schemas & Credentials Without OCA Bundles
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  {filteredMissingBundles.length} schema{filteredMissingBundles.length !== 1 ? 's' : ''} or credential definition{filteredMissingBundles.length !== 1 ? 's' : ''} found on the ledger{filteredMissingBundles.length !== 1 ? 's' : ''} without OCA overlay bundles.
-                  {isLoadingMissingBundles && (
-                    <Box display="inline-flex" alignItems="center" ml={2}>
-                      <CircularProgress size={16} sx={{ mr: 1 }} />
-                      <Typography variant="caption">Loading...</Typography>
-                    </Box>
-                  )}
-                </Typography>
-              </Paper>
-
-              {Object.entries(groupedMissingBundles).map(([network, bundles]) => (
-                <Accordion key={network} defaultExpanded={false} sx={{ mb: 2 }}>
-                  <AccordionSummary
-                    expandIcon={<ExpandMore />}
-                    aria-controls={`${network}-missing-content`}
-                    id={`${network}-missing-header`}
-                  >
-                    <Typography variant="h6" component="div">
-                      {bundles[0]?.networkDisplayName || network}
-                      <Chip
-                        label={bundles.length}
-                        size="small"
-                        sx={{ ml: 2 }}
-                        color="secondary"
-                      />
-                    </Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Grid container spacing={3}>
-                      {bundles.map((bundle) => (
-                        <Grid item xs={12} sm={6} md={4} lg={4} xl={3} key={bundle.id}>
-                          <TransactionCard transaction={bundle} />
                         </Grid>
                       ))}
                     </Grid>
