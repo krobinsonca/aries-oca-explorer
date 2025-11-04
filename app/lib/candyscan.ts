@@ -16,8 +16,12 @@ const CANDYSCAN_NETWORKS = ['CANDY_DEV', 'CANDY_TEST', 'CANDY_PROD'] as const;
 const getCandyscanUrl = (network: string, page: number, pageSize: number): string => {
   // Check if we're in browser (client-side)
   if (typeof window !== 'undefined') {
-    // Use our API route proxy to avoid CORS (works in dev, not in static export)
-    return `/api/candyscan/transactions/?network=${network}&page=${page}&pageSize=${pageSize}`;
+    // In static export, API routes don't exist, so we need to use direct URL
+    // This will fail due to CORS, but we'll catch it gracefully
+    // For now, disable the feature in production static export
+    // TODO: Consider using a CORS proxy or different approach for production
+    const filterTxNames = encodeURIComponent('["SCHEMA","CLAIM_DEF"]');
+    return `${CANDYSCAN_BASE_URL}/txs/${network}/domain?page=${page}&pageSize=${pageSize}&filterTxNames=${filterTxNames}&sortFromRecent=true`;
   } else {
     // Server-side: use direct URL
     const filterTxNames = encodeURIComponent('["SCHEMA","CLAIM_DEF"]');
@@ -47,31 +51,42 @@ export async function fetchCandyscanTransactions(
     // Use proxy URL for browser, direct URL for server
     const url = getCandyscanUrl(network, page, pageSize);
 
+    // In browser (static export), direct fetch will fail due to CORS
+    // Catch this gracefully and return empty result
     const response = await fetch(url, {
       headers: {
         'Accept': 'application/json',
       },
       signal: AbortSignal.timeout(10000) // 10 second timeout
+    }).catch((error) => {
+      // CORS error or network error - return empty result gracefully
+      if (typeof window !== 'undefined') {
+        console.warn(`CORS or network error fetching from candyscan (expected in static export):`, error);
+        return null;
+      }
+      throw error;
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response || !response.ok) {
+      // In static export, API routes don't exist and direct fetch fails due to CORS
+      // Return empty result gracefully
+      return { transactions: [], hasMore: false };
     }
 
-    const data = await response.json();
+    // Candyscan returns HTML with JSON embedded in __NEXT_DATA__ script tag
+    const html = await response.text();
 
-    // Our API route returns { transactions: [...] }
-    // Handle both our API format and potential direct candyscan responses
-    let transactions: any[] = [];
-    if (data.transactions && Array.isArray(data.transactions)) {
-      transactions = data.transactions;
-    } else if (Array.isArray(data)) {
-      transactions = data;
-    } else if (data.data && Array.isArray(data.data)) {
-      transactions = data.data;
-    } else if (data.value && Array.isArray(data.value)) {
-      transactions = data.value;
+    // Extract JSON from __NEXT_DATA__ script tag
+    const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">([^<]+)<\/script>/);
+
+    if (!nextDataMatch || !nextDataMatch[1]) {
+      return { transactions: [], hasMore: false };
     }
+
+    const nextData = JSON.parse(nextDataMatch[1]);
+
+    // Extract transactions from the Next.js props
+    const transactions = nextData?.props?.pageProps?.indyscanTxs || [];
 
     // Transform to LedgerTransaction format
     const ledgerTransactions: LedgerTransaction[] = transactions.map((tx: any) => {

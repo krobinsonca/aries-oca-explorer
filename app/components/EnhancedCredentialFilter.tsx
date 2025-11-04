@@ -60,7 +60,9 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
           setMissingBundles(missing);
         }
       } catch (error) {
-        console.error('Error fetching missing bundles:', error);
+        // Silently handle errors - in static export, API routes don't exist
+        // and direct CORS requests will fail, which is expected
+        console.debug('Missing bundles feature unavailable (expected in static export):', error);
         if (isMounted) {
           setMissingBundles([]);
         }
