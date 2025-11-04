@@ -427,7 +427,7 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
 
             // Create separate bundle entries for each ledger (ocabundle + ledger = unique)
             const bundles: BundleWithLedger[] = [];
-            for (const [ledgerKey, ledgerData] of ledgerGroups.entries()) {
+            Array.from(ledgerGroups.entries()).forEach(([ledgerKey, ledgerData]) => {
               const ledgerNormalized = ledgerKey;
               const ledgerDisplayName = getLedgerDisplayName(ledgerData.ledger);
 
@@ -444,7 +444,7 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
                 ledgerDisplayName: ledgerDisplayName,
                 ledgerNormalized: ledgerNormalized
               });
-            }
+            });
 
             return bundles.length > 0 ? bundles : [{
               ...bundle,
