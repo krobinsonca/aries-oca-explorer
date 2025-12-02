@@ -63,7 +63,7 @@ export default async function Page({ params }: { params: { id: string } }) {
   // Decode the ID - Next.js encodes it when processing the route parameter
   // Use decodeURIComponent to properly decode all encoded characters (%2F, %3A, etc.)
   let id = params.id;
-  
+
   // Always try to decode - Next.js will encode the ID in the URL
   try {
     id = decodeURIComponent(id);

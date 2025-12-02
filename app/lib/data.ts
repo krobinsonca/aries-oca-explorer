@@ -553,7 +553,7 @@ export async function fetchOverlayBundleData(option: any, opts?: { includeTestDa
 
     // Extract the base directory URL (remove the filename) for resolving relative resource URLs
     const bundleDirUrl = option.url.replace(/\/[^/]+$/, '');
-    
+
     const resolveResourceUrl = (url: string | undefined): string | undefined => {
       if (!url) return url;
       // If it's already an absolute URL, return as-is
@@ -623,18 +623,18 @@ export async function fetchOverlayBundleData(option: any, opts?: { includeTestDa
       const rawData = rawOverlayResult.value;
       if (Array.isArray(rawData) && rawData.length > 0) {
         const firstElement = rawData[0];
-        
+
         // Recursively resolve resource URLs in the overlay structure
         const resolveUrlsInObject = (obj: any): void => {
           if (!obj || typeof obj !== 'object') return;
-          
+
           // Resolve branding URLs
           if (obj.branding) {
             if (obj.branding.logo) obj.branding.logo = resolveResourceUrl(obj.branding.logo);
             if (obj.branding.backgroundImage) obj.branding.backgroundImage = resolveResourceUrl(obj.branding.backgroundImage);
             if (obj.branding.backgroundImageSlice) obj.branding.backgroundImageSlice = resolveResourceUrl(obj.branding.backgroundImageSlice);
           }
-          
+
           // Recursively process nested objects and arrays
           for (const key in obj) {
             if (Array.isArray(obj[key])) {
@@ -644,9 +644,9 @@ export async function fetchOverlayBundleData(option: any, opts?: { includeTestDa
             }
           }
         };
-        
+
         resolveUrlsInObject(firstElement);
-        
+
         // Create overlay bundle from modified data
         overlay = OverlayBundleFactory.createOverlayBundle(option.id, firstElement);
       }
