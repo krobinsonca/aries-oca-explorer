@@ -2,7 +2,7 @@ const webpack = require('webpack');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    output: 'export',
+    ...(process.env.NODE_ENV === 'production' && { output: 'export' }),
     trailingSlash: true,
     // Disable image optimization for static export
     images: {

@@ -26,55 +26,55 @@ const FALLBACK_CREDENTIAL_IDS = [
   'QzLYGuAebsy3MXQ6b1sFiT:3:CL:2351:lawyer',
   'RCnz8GcyZ2iH7VFr5zGb9N:3:CL:35170:Lawyer Credential',
   'RGjWbW1eycP7FrMf4QJvX8:3:CL:13:Person',
+  'did:webvh:Qma5QcFZaqK1ZG1W8wdT9Jkh4KifomNKormk9MSngschso:sandbox.bcvh.vonx.io:traction-tests:my-issuer-01/resources/zQmc3Gcpqvt6kPW2QYDiQ28YBn4GxkMHaPZFuc5eKyTLU6Z',
 ];
 
 export async function generateStaticParams() {
   // Fetch ALL credential IDs from the API during build to generate static pages
   // This ensures all credential detail pages exist for GitHub Pages static export
 
-  console.log('generateStaticParams: Fetching credential IDs from API for static generation');
+  // Start with fallback IDs to ensure known IDs are always included
+  const allIds = new Set<string>(FALLBACK_CREDENTIAL_IDS);
 
   try {
     const bundles = await fetchOverlayBundleList();
 
-    // Extract all unique credential IDs from all bundles
-    const allIds = new Set<string>();
+    // Extract all unique credential IDs from all bundles and add to set
     bundles.forEach(bundle => {
       bundle.ids.forEach(id => allIds.add(id));
     });
-
-    // Return raw IDs - Next.js will handle URL encoding automatically
-    // This matches Next.js best practices for generateStaticParams
-    const staticIds = Array.from(allIds).map((id) => ({
-      id: id
-    }));
-
-    console.log(`generateStaticParams: Generating ${staticIds.length} static pages from API data`);
-    return staticIds;
   } catch (error) {
-    console.warn('generateStaticParams: Failed to fetch from API, using fallback IDs:', error);
-    // Fallback to known IDs if API fetch fails during build
-    // Return raw IDs - Next.js will handle URL encoding automatically
-    const staticIds = FALLBACK_CREDENTIAL_IDS.map((id) => ({
-      id: id
-    }));
-    console.log(`generateStaticParams: Using ${staticIds.length} fallback credential IDs`);
-    return staticIds;
+    console.warn('generateStaticParams: Failed to fetch from API, using fallback IDs only:', error);
   }
+
+  // Encode IDs to match Next.js URL encoding behavior
+  // Next.js encodes special characters (including colons and slashes) in dynamic route params
+  // We need to match that encoding format for generateStaticParams to work correctly
+  const staticIds = Array.from(allIds).map((id) => ({
+    id: encodeURIComponent(id)
+  }));
+
+  return staticIds;
 }
 
-export default async function Page({ params }: { params: { id: string } }) {
-  // Next.js automatically decodes URL-encoded params
-  // The id should already be decoded, but handle edge cases
-  let id = params.id;
+export const dynamicParams = true;
 
-  // Decode if still encoded (shouldn't happen, but safety check)
-  if (id.includes('%')) {
-    try {
-      id = decodeURIComponent(id);
-    } catch (e) {
-      // If decode fails, use as-is
-      console.warn('Failed to decode ID:', id);
+export default async function Page({ params }: { params: { id: string } }) {
+  // Decode the ID - Next.js encodes it when processing the route parameter
+  // Use decodeURIComponent to properly decode all encoded characters (%2F, %3A, etc.)
+  let id = params.id;
+  
+  // Always try to decode - Next.js will encode the ID in the URL
+  try {
+    id = decodeURIComponent(id);
+  } catch (e) {
+    // If decoding fails, try manual decoding of just slashes (fallback)
+    if (id.includes('%2F')) {
+      id = id.replace(/%2F/g, '/');
+    }
+    // Also try to decode colons if they're encoded
+    if (id.includes('%3A')) {
+      id = id.replace(/%3A/g, ':');
     }
   }
 
@@ -89,10 +89,6 @@ export default async function Page({ params }: { params: { id: string } }) {
     });
 
     if (!option) {
-      console.warn(`Bundle not found for ID: ${params.id} (decoded: ${id})`);
-      // Log available IDs for debugging
-      const availableIds = bundles.flatMap(b => b.ids).slice(0, 5);
-      console.warn(`Available IDs (first 5): ${availableIds.join(', ')}`);
       notFound();
     }
 

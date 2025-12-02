@@ -94,8 +94,9 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
 
       // Use relative path for client-side navigation to work with basePath
       // Include trailing slash to match Next.js trailingSlash: true config
-      // Next.js router will handle URL encoding automatically
-      router.push(`identifier/${bundle.id}/`);
+      // Encode the ID to match Next.js URL encoding behavior (same as generateStaticParams)
+      const encodedId = encodeURIComponent(bundle.id);
+      router.push(`identifier/${encodedId}/`);
     } catch (error) {
       console.error('Navigation error:', error);
       setIsLoading(false);
