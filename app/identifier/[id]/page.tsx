@@ -32,7 +32,9 @@ export async function generateStaticParams() {
   return staticIds;
 }
 
-export const dynamicParams = true;
+// With output: 'export', we must pre-generate all pages at build time
+// Setting dynamicParams to false ensures Next.js generates all pages from generateStaticParams
+export const dynamicParams = false;
 
 export default async function Page({ params }: { params: { id: string } }) {
   // Decode the ID - Next.js encodes it when processing the route parameter
