@@ -81,7 +81,9 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./out
+          # With basePath: '/aries-oca-explorer', Next.js generates files in out/aries-oca-explorer/
+          # We need to upload that subdirectory so GitHub Pages serves from the correct root
+          path: ./out/aries-oca-explorer
 
   # Deployment job
   deploy:

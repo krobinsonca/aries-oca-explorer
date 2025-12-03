@@ -16,9 +16,10 @@ export async function generateStaticParams() {
       bundle.ids.forEach(id => allIds.add(id));
     });
   } catch (error) {
-    console.warn('generateStaticParams: Failed to fetch from API:', error);
-    // Return empty array if API fetch fails - dynamicParams will handle runtime generation
-    return [];
+    // Fail the build if API fetch fails - we need all IDs for static generation
+    // With output: 'export', we can't generate pages at runtime
+    console.error('generateStaticParams: Failed to fetch from API:', error);
+    throw new Error(`Failed to fetch bundle list during static generation: ${error instanceof Error ? error.message : 'Unknown error'}. This will cause 404s for all credential detail pages.`);
   }
 
   // Encode IDs to match Next.js URL encoding behavior
@@ -28,6 +29,7 @@ export async function generateStaticParams() {
     id: encodeURIComponent(id)
   }));
 
+  console.log(`generateStaticParams: Generated ${staticIds.length} static pages for credential identifiers`);
   return staticIds;
 }
 
