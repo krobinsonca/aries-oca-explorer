@@ -4,12 +4,15 @@ const webpack = require('webpack');
 const nextConfig = {
     ...(process.env.NODE_ENV === 'production' && { output: 'export' }),
     trailingSlash: true,
+    // Explicitly set basePath for GitHub Pages deployment
+    // The actions/configure-pages@v5 action should inject this, but we're setting it explicitly
+    // to ensure it works correctly
+    basePath: process.env.NODE_ENV === 'production' ? '/aries-oca-explorer' : '',
+    assetPrefix: process.env.NODE_ENV === 'production' ? '/aries-oca-explorer' : '',
     // Disable image optimization for static export
     images: {
         unoptimized: true,
     },
-    // basePath and assetPrefix are automatically configured by GitHub Actions
-    // via actions/configure-pages@v5 with static_site_generator: next
     // https://nextjs.org/docs/api-reference/next.config.js/custom-webpack-config
     webpack: (config, { isServer }) => {
         config.resolve.alias = {
