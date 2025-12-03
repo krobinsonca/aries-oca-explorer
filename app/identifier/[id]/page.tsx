@@ -22,11 +22,10 @@ export async function generateStaticParams() {
     throw new Error(`Failed to fetch bundle list during static generation: ${error instanceof Error ? error.message : 'Unknown error'}. This will cause 404s for all credential detail pages.`);
   }
 
-  // Encode IDs to match Next.js URL encoding behavior
-  // Next.js encodes special characters (including colons and slashes) in dynamic route params
-  // We need to match that encoding format for generateStaticParams to work correctly
+  // Return raw IDs - Next.js will automatically encode them when creating file paths
+  // and decode them when passing to the Page component
   const staticIds = Array.from(allIds).map((id) => ({
-    id: encodeURIComponent(id)
+    id: id
   }));
 
   console.log(`generateStaticParams: Generated ${staticIds.length} static pages for credential identifiers`);
