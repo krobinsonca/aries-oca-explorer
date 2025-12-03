@@ -41,6 +41,15 @@ const readmeCache = new Map<string, {
   ledgerMap?: Map<string, { ledger: string; ledgerUrl?: string }>;
 }>();
 
+// Cache for bundle list to ensure consistency across generateStaticParams and page rendering
+let bundleListCache: {
+  bundles: BundleWithLedger[];
+  timestamp: number;
+} | null = null;
+
+// Cache TTL: 5 minutes (enough for a single build, but prevents stale data across builds)
+const BUNDLE_LIST_CACHE_TTL = 5 * 60 * 1000;
+
 // Normalize ledger value for consistent filtering
 export function normalizeLedgerValue(ledger: string | undefined): string {
   if (!ledger) return "unknown";
@@ -316,8 +325,17 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{
 
 // Enhanced function to fetch bundle list with ledger information
 export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
+  // Return cached result if available and fresh (within TTL)
+  // This ensures consistency between generateStaticParams and page rendering during build
+  const now = Date.now();
+  if (bundleListCache && (now - bundleListCache.timestamp) < BUNDLE_LIST_CACHE_TTL) {
+    console.log('fetchOverlayBundleList: Using cached bundle list');
+    return bundleListCache.bundles;
+  }
+
   try {
     // Add cache-busting to ensure fresh data from CDN
+    // But only on the first fetch - subsequent calls in the same build will use cache
     const cacheBuster = Date.now();
     const randomSuffix = Math.random().toString(36).substring(7);
     const url = `${BUNDLE_LIST_URL}/${BUNDLE_LIST_FILE}?t=${cacheBuster}&r=${randomSuffix}&nocache=1`;
@@ -484,6 +502,12 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
         await new Promise(resolve => setTimeout(resolve, 200)); // Increased from 100ms to 200ms
       }
     }
+
+    // Cache the result for subsequent calls during the same build
+    bundleListCache = {
+      bundles: enhancedBundles,
+      timestamp: Date.now()
+    };
 
     return enhancedBundles;
   } catch (error) {

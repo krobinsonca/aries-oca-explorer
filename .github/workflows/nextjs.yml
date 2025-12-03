@@ -81,6 +81,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
+          # actions/configure-pages@v5 with static_site_generator: next automatically
+          # configures basePath and generates files in the correct location
           path: ./out
 
   # Deployment job

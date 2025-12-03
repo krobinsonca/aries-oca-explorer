@@ -8,11 +8,8 @@ const nextConfig = {
     images: {
         unoptimized: true,
     },
-    // Only use basePath and assetPrefix in production (for GitHub Pages)
-    ...(process.env.NODE_ENV === 'production' && {
-        basePath: '/aries-oca-explorer',
-        assetPrefix: '/aries-oca-explorer',
-    }),
+    // basePath and assetPrefix are automatically configured by GitHub Actions
+    // via actions/configure-pages@v5 with static_site_generator: next
     // https://nextjs.org/docs/api-reference/next.config.js/custom-webpack-config
     webpack: (config, { isServer }) => {
         config.resolve.alias = {

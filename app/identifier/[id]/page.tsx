@@ -16,22 +16,26 @@ export async function generateStaticParams() {
       bundle.ids.forEach(id => allIds.add(id));
     });
   } catch (error) {
-    console.warn('generateStaticParams: Failed to fetch from API:', error);
-    // Return empty array if API fetch fails - dynamicParams will handle runtime generation
-    return [];
+    // Fail the build if API fetch fails - we need all IDs for static generation
+    // With output: 'export', we can't generate pages at runtime
+    console.error('generateStaticParams: Failed to fetch from API:', error);
+    throw new Error(`Failed to fetch bundle list during static generation: ${error instanceof Error ? error.message : 'Unknown error'}. This will cause 404s for all credential detail pages.`);
   }
 
-  // Encode IDs to match Next.js URL encoding behavior
-  // Next.js encodes special characters (including colons and slashes) in dynamic route params
-  // We need to match that encoding format for generateStaticParams to work correctly
+  // Return raw IDs - Next.js will automatically encode them when creating file paths
+  // and decode them when passing to the Page component
   const staticIds = Array.from(allIds).map((id) => ({
-    id: encodeURIComponent(id)
+    id: id
   }));
 
+  console.log(`generateStaticParams: Generated ${staticIds.length} static pages for credential identifiers`);
   return staticIds;
 }
 
-export const dynamicParams = true;
+// With output: 'export', we must pre-generate all pages at build time
+// Force static generation to prevent deopt into client-side rendering
+export const dynamic = 'force-static';
+export const dynamicParams = false;
 
 export default async function Page({ params }: { params: { id: string } }) {
   // Decode the ID - Next.js encodes it when processing the route parameter
@@ -63,6 +67,23 @@ export default async function Page({ params }: { params: { id: string } }) {
     });
 
     if (!option) {
+      // Log detailed info for debugging during static generation
+      // This helps identify why IDs from generateStaticParams aren't found during rendering
+      const allIds = bundles.flatMap(b => b.ids);
+      const foundSimilar = allIds.filter(bundleId => {
+        // Check if IDs are similar (same credential definition or schema)
+        const idParts = id.split(':');
+        const bundleIdParts = bundleId.split(':');
+        return idParts.length === bundleIdParts.length &&
+               idParts.slice(0, -1).join(':') === bundleIdParts.slice(0, -1).join(':');
+      }).slice(0, 3);
+
+      console.error(`Page component: Could not find bundle for ID: ${id} (encoded: ${params.id})`);
+      console.error(`Total bundles available: ${bundles.length}`);
+      console.error(`Total IDs across all bundles: ${allIds.length}`);
+      if (foundSimilar.length > 0) {
+        console.error(`Similar IDs found: ${foundSimilar.join(', ')}`);
+      }
       notFound();
     }
 
