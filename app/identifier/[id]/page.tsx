@@ -22,10 +22,10 @@ export async function generateStaticParams() {
     throw new Error(`Failed to fetch bundle list during static generation: ${error instanceof Error ? error.message : 'Unknown error'}. This will cause 404s for all credential detail pages.`);
   }
 
-  // Encode IDs to prevent Next.js from treating / as path separator during static export
-  // This matches the encoding used in EnhancedCredentialFilter navigation
+  // Replace forward slashes with __SLASH__ to prevent Next.js from treating / as path separator
+  // This maintains compatibility with existing pages while fixing the forward slash issue
   const staticIds = Array.from(allIds).map((id) => ({
-    id: encodeURIComponent(id)
+    id: id.replace(/\//g, '__SLASH__')
   }));
 
   console.log(`generateStaticParams: Generated ${staticIds.length} static pages for credential identifiers`);
@@ -38,15 +38,15 @@ export const dynamic = 'force-static';
 export const dynamicParams = false;
 
 export default async function Page({ params }: { params: { id: string } }) {
-  // Decode the ID - it was encoded in generateStaticParams to prevent path issues
-  let id: string;
+  // Next.js automatically URL-decodes route params, so we need to restore __SLASH__ to /
+  // Then handle any remaining URL encoding that Next.js applied
+  let id = params.id.replace(/__SLASH__/g, '/');
+
+  // Next.js may have URL-encoded the param, so try decoding
   try {
-    id = decodeURIComponent(params.id);
+    id = decodeURIComponent(id);
   } catch (e) {
-    // If decoding fails, log and return 404
-    console.error('Failed to decode ID:', params.id, e);
-    notFound();
-    return;
+    // If decoding fails, the ID might already be decoded, continue with current value
   }
 
   try {
