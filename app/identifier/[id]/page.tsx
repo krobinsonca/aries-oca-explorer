@@ -26,7 +26,6 @@ const FALLBACK_CREDENTIAL_IDS = [
   'QzLYGuAebsy3MXQ6b1sFiT:3:CL:2351:lawyer',
   'RCnz8GcyZ2iH7VFr5zGb9N:3:CL:35170:Lawyer Credential',
   'RGjWbW1eycP7FrMf4QJvX8:3:CL:13:Person',
-  'did:webvh:Qma5QcFZaqK1ZG1W8wdT9Jkh4KifomNKormk9MSngschso:sandbox.bcvh.vonx.io:traction-tests:my-issuer-01/resources/zQmc3Gcpqvt6kPW2QYDiQ28YBn4GxkMHaPZFuc5eKyTLU6Z',
 ];
 
 export async function generateStaticParams() {

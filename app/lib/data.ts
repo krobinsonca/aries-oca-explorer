@@ -71,6 +71,22 @@ export function normalizeLedgerValue(ledger: string | undefined): string {
 export function getLedgerDisplayName(ledger: string | undefined): string {
   if (!ledger) return "Unknown Ledger";
 
+  // Check for did:webvh patterns first (before normalization)
+  const webvhPattern = ledger.match(/^webvh:bcgov:(sandbox|dev|test|prod)$/i);
+  if (webvhPattern) {
+    const env = webvhPattern[1].toLowerCase();
+    switch (env) {
+      case "sandbox":
+        return "BC Gov did:webvh Sandbox Server";
+      case "dev":
+        return "BC Gov did:webvh Development Server";
+      case "test":
+        return "BC Gov did:webvh Test Server";
+      case "prod":
+        return "BC Gov did:webvh Production Server";
+    }
+  }
+
   // Check if we have a normalized mapping
   const normalized = normalizeLedgerValue(ledger);
 
