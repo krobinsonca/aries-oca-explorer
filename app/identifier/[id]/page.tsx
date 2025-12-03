@@ -72,10 +72,10 @@ export default async function Page({ params }: { params: { id: string } }) {
         // Check if IDs are similar (same credential definition or schema)
         const idParts = id.split(':');
         const bundleIdParts = bundleId.split(':');
-        return idParts.length === bundleIdParts.length && 
+        return idParts.length === bundleIdParts.length &&
                idParts.slice(0, -1).join(':') === bundleIdParts.slice(0, -1).join(':');
       }).slice(0, 3);
-      
+
       console.error(`Page component: Could not find bundle for ID: ${id} (encoded: ${params.id})`);
       console.error(`Total bundles available: ${bundles.length}`);
       console.error(`Total IDs across all bundles: ${allIds.length}`);
