@@ -33,7 +33,8 @@ export async function generateStaticParams() {
 }
 
 // With output: 'export', we must pre-generate all pages at build time
-// Setting dynamicParams to false ensures Next.js generates all pages from generateStaticParams
+// Force static generation to prevent deopt into client-side rendering
+export const dynamic = 'force-static';
 export const dynamicParams = false;
 
 export default async function Page({ params }: { params: { id: string } }) {
