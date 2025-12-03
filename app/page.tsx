@@ -1,9 +1,9 @@
 import { fetchOverlayBundleList, BundleWithLedger } from '@/app/lib/data';
 import { Box, Typography, Paper } from '@mui/material';
-import dynamic from 'next/dynamic';
+import dynamicImport from 'next/dynamic';
 
 // Dynamically import the client component to prevent SSR/SSG deoptimization
-const EnhancedCredentialFilter = dynamic(
+const EnhancedCredentialFilter = dynamicImport(
   () => import('@/app/components/EnhancedCredentialFilter'),
   {
     ssr: false,

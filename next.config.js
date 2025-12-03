@@ -2,7 +2,7 @@ const webpack = require('webpack');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    output: 'export',
+    ...(process.env.NODE_ENV === 'production' && { output: 'export' }),
     trailingSlash: true,
     // Disable image optimization for static export
     images: {
@@ -20,7 +20,7 @@ const nextConfig = {
             'react-native$': 'react-native-web',
             'class-validator': require.resolve('class-validator'),
         };
-        
+
         // Handle problematic native dependencies
         config.resolve.fallback = {
             ...config.resolve.fallback,
@@ -34,7 +34,7 @@ const nextConfig = {
             'os': false,
             'util': false,
         };
-        
+
         // Ignore native modules that cause issues
         config.module.rules.push({
             test: /\.node$/,
@@ -47,7 +47,7 @@ const nextConfig = {
                 resourceRegExp: /^(rdf-canonize-native|web-streams-polyfill\/ponyfill\/es2018|react-native-fs)$/,
             })
         );
-        
+
         return config;
     },
 };
