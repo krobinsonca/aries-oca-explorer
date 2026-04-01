@@ -34,27 +34,21 @@ export interface BundleFilters {
   searchTerm?: string;
 }
 
-// Interface for candyscan transaction data
-export interface LedgerTransaction {
-  seqNo: number;
-  txType: 'SCHEMA' | 'CLAIM_DEF';
-  txTime: number;
-  identifier: string;
-  data: {
-    name?: string;
-    version?: string;
-    schemaId?: string;
-    [key: string]: any;
-  };
-  network: 'CANDY_DEV' | 'CANDY_TEST' | 'CANDY_PROD';
-}
-
 // Cache for README content to avoid repeated fetches
 const readmeCache = new Map<string, {
   ledger?: string;
   ledgerUrl?: string;
   ledgerMap?: Map<string, { ledger: string; ledgerUrl?: string }>;
 }>();
+
+// Cache for bundle list to ensure consistency across generateStaticParams and page rendering
+let bundleListCache: {
+  bundles: BundleWithLedger[];
+  timestamp: number;
+} | null = null;
+
+// Cache TTL: 5 minutes (enough for a single build, but prevents stale data across builds)
+const BUNDLE_LIST_CACHE_TTL = 5 * 60 * 1000;
 
 // Normalize ledger value for consistent filtering
 export function normalizeLedgerValue(ledger: string | undefined): string {
@@ -86,32 +80,43 @@ export function normalizeLedgerValue(ledger: string | undefined): string {
 export function getLedgerDisplayName(ledger: string | undefined): string {
   if (!ledger) return "Unknown Ledger";
 
+  // Check for did:webvh patterns first (before normalization)
+  const webvhPattern = ledger.match(/^webvh:bcgov:(sandbox|dev|test|prod)$/i);
+  if (webvhPattern) {
+    const env = webvhPattern[1].toLowerCase();
+    switch (env) {
+      case "sandbox":
+        return "BC Gov did:webvh Sandbox Server";
+      case "dev":
+        return "BC Gov did:webvh Development Server";
+      case "test":
+        return "BC Gov did:webvh Test Server";
+      case "prod":
+        return "BC Gov did:webvh Production Server";
+    }
+  }
+
   // Check if we have a normalized mapping
   const normalized = normalizeLedgerValue(ledger);
 
   // Return a clean, readable version
   switch (normalized) {
     case "candy-prod":
-      return "Candy Production";
+      return "CANdy Production";
     case "candy-dev":
-      return "Candy Development";
+      return "CANdy Development";
     case "candy-test":
-      return "Candy Test";
+      return "CANdy Test";
     case "bcovrin-test":
       return "BCovrin Test";
-    case "bcovrin-prod":
-      return "BCovrin Production";
     case "mainnet":
-      return "Mainnet";
+      return "Sovrin MainNet";
     case "testnet":
-      return "Testnet";
-    case "devnet":
-      return "Development Network";
+      return "Sovrin TestNet";
     default:
-      // If no specific mapping, format the original nicely
-      return ledger.split(/[-_:]/)
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(" ");
+      // For unknown cases, use the original ledger value from the README table
+      // This preserves the exact capitalization from the source data
+      return ledger;
   }
 }
 
@@ -320,8 +325,17 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{
 
 // Enhanced function to fetch bundle list with ledger information
 export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
+  // Return cached result if available and fresh (within TTL)
+  // This ensures consistency between generateStaticParams and page rendering during build
+  const now = Date.now();
+  if (bundleListCache && (now - bundleListCache.timestamp) < BUNDLE_LIST_CACHE_TTL) {
+    console.log('fetchOverlayBundleList: Using cached bundle list');
+    return bundleListCache.bundles;
+  }
+
   try {
     // Add cache-busting to ensure fresh data from CDN
+    // But only on the first fetch - subsequent calls in the same build will use cache
     const cacheBuster = Date.now();
     const randomSuffix = Math.random().toString(36).substring(7);
     const url = `${BUNDLE_LIST_URL}/${BUNDLE_LIST_FILE}?t=${cacheBuster}&r=${randomSuffix}&nocache=1`;
@@ -489,6 +503,12 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
       }
     }
 
+    // Cache the result for subsequent calls during the same build
+    bundleListCache = {
+      bundles: enhancedBundles,
+      timestamp: Date.now()
+    };
+
     return enhancedBundles;
   } catch (error) {
     throw new Error(`Failed to fetch Overlay Bundle List: ${error instanceof Error ? error.message : "Unknown error"}`);
@@ -571,26 +591,105 @@ export async function fetchOverlayBundleData(option: any, opts?: { includeTestDa
 
     const includeTestData = opts?.includeTestData !== false;
 
-    const overlayPromise = OverlayBundleFactory.fetchOverlayBundle(option.id, option.url);
+    // Extract the base directory URL (remove the filename) for resolving relative resource URLs
+    const bundleDirUrl = option.url.replace(/\/[^/]+$/, '');
+
+    const resolveResourceUrl = (url: string | undefined): string | undefined => {
+      if (!url) return url;
+      // If it's already an absolute URL, return as-is
+      if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+        return url;
+      }
+      // If it contains a colon early on, it might be a DID or other identifier
+      // Check if it looks like a DID identifier path that includes a resource path
+      if (url.includes(':') && !url.startsWith('/')) {
+        const parts = url.split(':');
+        if (parts.length > 2 && parts[0] === 'did') {
+          // This is a DID identifier - check if it contains a resource path
+          if (url.includes('/resources/')) {
+            // Extract just the resource path part (everything after the last /resources/)
+            const resourcesIndex = url.lastIndexOf('/resources/');
+            if (resourcesIndex !== -1) {
+              const resourcePath = url.substring(resourcesIndex + 1); // Get '/resources/...'
+              // Resolve the resource path against the bundle directory
+              const cleanPath = resourcePath.replace(/^\.\//, '');
+              if (cleanPath.startsWith(bundleDirUrl)) {
+                return cleanPath;
+              }
+              return `${bundleDirUrl}/${cleanPath}`;
+            }
+          }
+          // If it's a DID but doesn't contain /resources/, it's probably not a resource URL
+          // Return as-is (might be used for other purposes)
+          return url;
+        }
+      }
+      // If it's a relative path, resolve it against the bundle directory
+      if (url.startsWith('/')) {
+        // Absolute path from root - resolve against base URL domain
+        try {
+          const urlObj = new URL(bundleDirUrl);
+          return `${urlObj.origin}${url}`;
+        } catch {
+          return url;
+        }
+      }
+      // Relative path - resolve against bundle directory
+      const cleanPath = url.replace(/^\.\//, '');
+      // Ensure we don't double up the bundleDirUrl if the path already contains it
+      if (cleanPath.startsWith(bundleDirUrl)) {
+        return cleanPath;
+      }
+      return `${bundleDirUrl}/${cleanPath}`;
+    };
+
+    // Fetch raw overlay data first so we can modify it before creating OverlayBundle
     const rawOverlayPromise = OverlayBundleFactory.fetchRawOverlayBundle(option.url);
-
-
     const dataPromise = includeTestData
       ? OverlayBundleFactory.fetchOverlayBundleData(option.url)
       : Promise.resolve({} as Record<string, string>);
 
-    const [overlayResult, dataResult, rawOverlayResult] = await Promise.allSettled([
-      overlayPromise,
-      dataPromise,
+    const [rawOverlayResult, dataResult] = await Promise.allSettled([
       rawOverlayPromise,
+      dataPromise,
     ]);
 
     let overlay = undefined;
     let data = undefined;
     let watermarkText = undefined;
 
-    if (overlayResult.status === 'fulfilled') {
-      overlay = overlayResult.value;
+    // Process raw overlay data to resolve relative resource URLs
+    if (rawOverlayResult.status === 'fulfilled') {
+      const rawData = rawOverlayResult.value;
+      if (Array.isArray(rawData) && rawData.length > 0) {
+        const firstElement = rawData[0];
+
+        // Recursively resolve resource URLs in the overlay structure
+        const resolveUrlsInObject = (obj: any): void => {
+          if (!obj || typeof obj !== 'object') return;
+
+          // Resolve branding URLs
+          if (obj.branding) {
+            if (obj.branding.logo) obj.branding.logo = resolveResourceUrl(obj.branding.logo);
+            if (obj.branding.backgroundImage) obj.branding.backgroundImage = resolveResourceUrl(obj.branding.backgroundImage);
+            if (obj.branding.backgroundImageSlice) obj.branding.backgroundImageSlice = resolveResourceUrl(obj.branding.backgroundImageSlice);
+          }
+
+          // Recursively process nested objects and arrays
+          for (const key in obj) {
+            if (Array.isArray(obj[key])) {
+              obj[key].forEach((item: any) => resolveUrlsInObject(item));
+            } else if (obj[key] && typeof obj[key] === 'object') {
+              resolveUrlsInObject(obj[key]);
+            }
+          }
+        };
+
+        resolveUrlsInObject(firstElement);
+
+        // Create overlay bundle from modified data
+        overlay = OverlayBundleFactory.createOverlayBundle(option.id, firstElement);
+      }
     }
 
     if (includeTestData) {
@@ -610,8 +709,8 @@ export async function fetchOverlayBundleData(option: any, opts?: { includeTestDa
           const firstElement = raw[0];
           // Check if it has overlays array and search through them
           if (firstElement.overlays && Array.isArray(firstElement.overlays)) {
-            for (const overlay of firstElement.overlays) {
-              const found = extractWatermarkFromObject(overlay);
+            for (const overlayItem of firstElement.overlays) {
+              const found = extractWatermarkFromObject(overlayItem);
               if (found) {
                 watermarkText = found;
                 break;
@@ -641,7 +740,7 @@ export async function fetchOverlayBundleData(option: any, opts?: { includeTestDa
 
     if (!overlay) {
       throw new Error(`Failed to fetch Overlay Bundle for ${option.id}: ${
-        overlayResult.status === 'rejected' ? overlayResult.reason.message : 'Unknown error'
+        rawOverlayResult.status === 'rejected' ? rawOverlayResult.reason.message : 'Unknown error'
       }`);
     }
 
