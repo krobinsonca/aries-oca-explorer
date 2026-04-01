@@ -350,7 +350,7 @@ function OverlayBundleViewContent({ option }: { option: any }) {
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 500, mb: 2 }}>
                 Associated Identifiers
               </Typography>
-              <GroupedIdDisplay ids={option.ids} ledgerNormalized={option.ledgerNormalized} />
+              <GroupedIdDisplay ids={option.ids} ledgerNormalized={option.ledgerNormalized} idLedgerMap={option.idLedgerMap} />
             </Paper>
           )}
 

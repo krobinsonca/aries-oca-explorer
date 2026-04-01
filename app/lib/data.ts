@@ -19,6 +19,13 @@ export interface BundleWithLedger {
   ledgerUrl?: string;
   ledgerDisplayName?: string; // User-friendly display name
   ledgerNormalized?: string; // Normalized value for consistent filtering
+  // Per-ID ledger mapping: maps each ID to its specific ledger info
+  // This ensures multi-ledger bundles have correct explorer URLs per identifier
+  idLedgerMap?: Record<string, {
+    ledger: string;
+    ledgerUrl?: string;
+    ledgerNormalized: string;
+  }>;
 }
 
 // Interface for ledger filter options
@@ -45,10 +52,29 @@ const readmeCache = new Map<string, {
 let bundleListCache: {
   bundles: BundleWithLedger[];
   timestamp: number;
+  baseUrl: string;
 } | null = null;
 
 // Cache TTL: 5 minutes (enough for a single build, but prevents stale data across builds)
 const BUNDLE_LIST_CACHE_TTL = 5 * 60 * 1000;
+
+// Current base URL (can be overridden for dev mode)
+let currentBaseUrl: string = BUNDLE_LIST_URL;
+
+// Get the current bundle list URL
+export function getBundleListUrl(): string {
+  return currentBaseUrl;
+}
+
+// Set the bundle list URL (for dev mode switching)
+export function setBundleListUrl(url: string): void {
+  if (url !== currentBaseUrl) {
+    console.log(`Bundle URL changed from ${currentBaseUrl} to ${url} - clearing cache`);
+    currentBaseUrl = url;
+    // Clear cache when URL changes
+    bundleListCache = null;
+  }
+}
 
 // Normalize ledger value for consistent filtering
 export function normalizeLedgerValue(ledger: string | undefined): string {
@@ -328,7 +354,9 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
   // Return cached result if available and fresh (within TTL)
   // This ensures consistency between generateStaticParams and page rendering during build
   const now = Date.now();
-  if (bundleListCache && (now - bundleListCache.timestamp) < BUNDLE_LIST_CACHE_TTL) {
+  if (bundleListCache &&
+      (now - bundleListCache.timestamp) < BUNDLE_LIST_CACHE_TTL &&
+      bundleListCache.baseUrl === currentBaseUrl) {
     console.log('fetchOverlayBundleList: Using cached bundle list');
     return bundleListCache.bundles;
   }
@@ -338,7 +366,7 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
     // But only on the first fetch - subsequent calls in the same build will use cache
     const cacheBuster = Date.now();
     const randomSuffix = Math.random().toString(36).substring(7);
-    const url = `${BUNDLE_LIST_URL}/${BUNDLE_LIST_FILE}?t=${cacheBuster}&r=${randomSuffix}&nocache=1`;
+    const url = `${currentBaseUrl}/${BUNDLE_LIST_FILE}?t=${cacheBuster}&r=${randomSuffix}&nocache=1`;
 
     const response = await fetch(url, {
       headers: {
@@ -427,6 +455,30 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
 
             // Create separate bundle entries for each ledger (ocabundle + ledger = unique)
             const bundles: BundleWithLedger[] = [];
+
+            // Build idLedgerMap for this bundle - maps each ID to its ledger info
+            const idLedgerMap: Record<string, { ledger: string; ledgerUrl?: string; ledgerNormalized: string }> = {};
+            for (const id of bundle.ids) {
+              const idLedgerInfo = ledgerInfo.ledgerMap?.get(id);
+              if (idLedgerInfo) {
+                const normalized = normalizeLedgerValue(idLedgerInfo.ledger);
+                idLedgerMap[id] = {
+                  ledger: idLedgerInfo.ledger,
+                  ledgerUrl: idLedgerInfo.ledgerUrl,
+                  ledgerNormalized: normalized
+                };
+              } else {
+                // Fallback: use the default ledger info
+                const defaultLedger = ledgerInfo.ledger || 'unknown';
+                const defaultNormalized = normalizeLedgerValue(defaultLedger);
+                idLedgerMap[id] = {
+                  ledger: defaultLedger,
+                  ledgerUrl: ledgerInfo.ledgerUrl,
+                  ledgerNormalized: defaultNormalized
+                };
+              }
+            }
+
             Array.from(ledgerGroups.entries()).forEach(([ledgerKey, ledgerData]) => {
               const ledgerNormalized = ledgerKey;
               const ledgerDisplayName = getLedgerDisplayName(ledgerData.ledger);
@@ -442,7 +494,8 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
                 ledger: ledgerData.ledger,
                 ledgerUrl: ledgerData.ledgerUrl,
                 ledgerDisplayName: ledgerDisplayName,
-                ledgerNormalized: ledgerNormalized
+                ledgerNormalized: ledgerNormalized,
+                idLedgerMap: idLedgerMap
               });
             });
 
@@ -451,7 +504,8 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
               ledger: ledgerInfo.ledger,
               ledgerUrl: ledgerInfo.ledgerUrl,
               ledgerDisplayName: ledgerInfo.ledger ? getLedgerDisplayName(ledgerInfo.ledger) : undefined,
-              ledgerNormalized: ledgerInfo.ledger ? normalizeLedgerValue(ledgerInfo.ledger) : undefined
+              ledgerNormalized: ledgerInfo.ledger ? normalizeLedgerValue(ledgerInfo.ledger) : undefined,
+              idLedgerMap: idLedgerMap
             }];
           } else {
             // Single ledger entry - keep all IDs together
@@ -463,6 +517,17 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
             const schemaIds = bundle.ids.filter((id: string) => id.includes(':2:'));
             const primaryId = schemaIds.length > 0 ? schemaIds[0] : bundle.ids[0];
 
+            // Build idLedgerMap for single ledger case
+            const singleLedgerIdLedgerMap: Record<string, { ledger: string; ledgerUrl?: string; ledgerNormalized: string }> = {};
+            const normalizedLedger = ledgerInfo.ledger ? normalizeLedgerValue(ledgerInfo.ledger) : 'unknown';
+            for (const id of bundle.ids) {
+              singleLedgerIdLedgerMap[id] = {
+                ledger: ledgerInfo.ledger || 'unknown',
+                ledgerUrl: ledgerInfo.ledgerUrl,
+                ledgerNormalized: normalizedLedger
+              };
+            }
+
             return [{
               ...bundle,
               id: primaryId, // Primary ID
@@ -470,7 +535,8 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
               ledger: ledgerInfo.ledger,
               ledgerUrl: explorerUrl,
               ledgerDisplayName: ledgerDisplayName,
-              ledgerNormalized: ledgerNormalized
+              ledgerNormalized: ledgerNormalized,
+              idLedgerMap: singleLedgerIdLedgerMap
             }];
           }
         } catch (error) {
@@ -488,7 +554,8 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
             ledger: undefined,
             ledgerUrl: undefined,
             ledgerDisplayName: undefined,
-            ledgerNormalized: undefined
+            ledgerNormalized: undefined,
+            idLedgerMap: undefined
           }];
         }
       });
@@ -506,7 +573,8 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
     // Cache the result for subsequent calls during the same build
     bundleListCache = {
       bundles: enhancedBundles,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      baseUrl: currentBaseUrl
     };
 
     return enhancedBundles;
@@ -585,7 +653,7 @@ function extractWatermarkFromObject(obj: any): string | object | undefined {
 export async function fetchOverlayBundleData(option: any, opts?: { includeTestData?: boolean }) {
   try {
     // Ensure proper URL construction without path doubling
-    const baseUrl = BUNDLE_LIST_URL.endsWith('/') ? BUNDLE_LIST_URL.slice(0, -1) : BUNDLE_LIST_URL;
+    const baseUrl = currentBaseUrl.endsWith('/') ? currentBaseUrl.slice(0, -1) : currentBaseUrl;
     const bundlePath = option.ocabundle.startsWith('/') ? option.ocabundle.slice(1) : option.ocabundle;
     option.url = `${baseUrl}/${bundlePath}`;
 
