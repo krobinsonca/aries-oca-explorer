@@ -2,18 +2,35 @@ import React from 'react';
 import { Box, Typography, Link } from '@mui/material';
 import { constructExplorerUrl } from '@/app/lib/data';
 
+interface IdLedgerInfo {
+  ledger: string;
+  ledgerUrl?: string;
+  ledgerNormalized: string;
+}
+
 interface GroupedIdDisplayProps {
   ids: string[];
   showTitle?: boolean;
   title?: string;
   ledgerNormalized?: string;
+  // Per-ID ledger mapping for correct explorer URLs in multi-ledger bundles
+  idLedgerMap?: Record<string, IdLedgerInfo>;
+}
+
+// Helper to get the ledger normalized value for a specific ID
+function getIdLedgerNormalized(id: string, idLedgerMap?: Record<string, IdLedgerInfo>, fallbackLedgerNormalized?: string): string | undefined {
+  if (idLedgerMap && idLedgerMap[id]) {
+    return idLedgerMap[id].ledgerNormalized;
+  }
+  return fallbackLedgerNormalized;
 }
 
 export default function GroupedIdDisplay({
   ids,
   showTitle = false,
   title = "Associated Identifiers",
-  ledgerNormalized
+  ledgerNormalized,
+  idLedgerMap
 }: GroupedIdDisplayProps) {
   if (!ids || ids.length === 0) {
     return null;
@@ -66,7 +83,8 @@ export default function GroupedIdDisplay({
                 {schemaIds.length > 1 ? 'Schema IDs' : 'Schema ID'}
               </Typography>
               {schemaIds.map((id, index) => {
-                const explorerUrl = constructExplorerUrl(id, ledgerNormalized, ids);
+                const idLedgerNormalized = getIdLedgerNormalized(id, idLedgerMap, ledgerNormalized);
+                const explorerUrl = constructExplorerUrl(id, idLedgerNormalized, ids);
                 return (
                   <Box key={index} sx={{ mb: index < schemaIds.length - 1 ? 1 : 0, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography
@@ -125,7 +143,8 @@ export default function GroupedIdDisplay({
                 {credDefIds.length > 1 ? 'Credential Definition IDs' : 'Credential Definition ID'}
               </Typography>
               {credDefIds.map((id, index) => {
-                const explorerUrl = constructExplorerUrl(id, ledgerNormalized, ids);
+                const idLedgerNormalized = getIdLedgerNormalized(id, idLedgerMap, ledgerNormalized);
+                const explorerUrl = constructExplorerUrl(id, idLedgerNormalized, ids);
                 return (
                   <Box key={index} sx={{ mb: index < credDefIds.length - 1 ? 1 : 0, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography
@@ -203,7 +222,8 @@ export default function GroupedIdDisplay({
               {ids[0]}
             </Typography>
             {(() => {
-              const explorerUrl = constructExplorerUrl(ids[0], ledgerNormalized, ids);
+              const idLedgerNormalized = getIdLedgerNormalized(ids[0], idLedgerMap, ledgerNormalized);
+              const explorerUrl = constructExplorerUrl(ids[0], idLedgerNormalized, ids);
               return explorerUrl ? (
                 <Link
                   href={explorerUrl}

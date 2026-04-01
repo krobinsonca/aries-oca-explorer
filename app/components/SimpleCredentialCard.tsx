@@ -234,7 +234,7 @@ function SimpleCredentialCardContent({ bundle, onClick, language = 'en' }: Simpl
     >
       <CredentialCard overlay={overlay || undefined} record={mockRecord || undefined} language={language} />
       {/* All IDs below the card */}
-      <GroupedIdDisplay ids={bundle.ids || [bundle.id]} ledgerNormalized={bundle.ledgerNormalized} />
+      <GroupedIdDisplay ids={bundle.ids || [bundle.id]} ledgerNormalized={bundle.ledgerNormalized} idLedgerMap={bundle.idLedgerMap} />
     </Box>
   );
 }
@@ -323,7 +323,7 @@ function SimpleCredentialCardWithBranding({ bundle, onClick, language = 'en' }: 
             {error}
           </Typography>
         </Box>
-        <GroupedIdDisplay ids={bundle.ids || [bundle.id]} ledgerNormalized={bundle.ledgerNormalized} />
+      <GroupedIdDisplay ids={bundle.ids || [bundle.id]} ledgerNormalized={bundle.ledgerNormalized} idLedgerMap={bundle.idLedgerMap} />
       </Box>
     );
   }
