@@ -5,6 +5,7 @@ import { Button, Box } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
+import DevPanelButton from "./DevPanelButton";
 
 interface HeaderClientProps {
   children: React.ReactNode;
@@ -43,7 +44,8 @@ export default function HeaderClient({ children }: HeaderClientProps) {
 
       {children}
 
-      <Box sx={{ ml: "auto" }} role="complementary" aria-label="Theme controls">
+      <Box sx={{ ml: "auto" }} role="complementary" aria-label="Theme and developer controls">
+        <DevPanelButton />
         <ThemeToggle />
       </Box>
     </>
