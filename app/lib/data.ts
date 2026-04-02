@@ -456,32 +456,30 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
             // Create separate bundle entries for each ledger (ocabundle + ledger = unique)
             const bundles: BundleWithLedger[] = [];
 
-            // Build idLedgerMap for this bundle - maps each ID to its ledger info
-            const idLedgerMap: Record<string, { ledger: string; ledgerUrl?: string; ledgerNormalized: string }> = {};
-            for (const id of bundle.ids) {
-              const idLedgerInfo = ledgerInfo.ledgerMap?.get(id);
-              if (idLedgerInfo) {
-                const normalized = normalizeLedgerValue(idLedgerInfo.ledger);
-                idLedgerMap[id] = {
-                  ledger: idLedgerInfo.ledger,
-                  ledgerUrl: idLedgerInfo.ledgerUrl,
-                  ledgerNormalized: normalized
-                };
-              } else {
-                // Fallback: use the default ledger info
-                const defaultLedger = ledgerInfo.ledger || 'unknown';
-                const defaultNormalized = normalizeLedgerValue(defaultLedger);
-                idLedgerMap[id] = {
-                  ledger: defaultLedger,
-                  ledgerUrl: ledgerInfo.ledgerUrl,
-                  ledgerNormalized: defaultNormalized
-                };
-              }
-            }
-
             Array.from(ledgerGroups.entries()).forEach(([ledgerKey, ledgerData]) => {
               const ledgerNormalized = ledgerKey;
               const ledgerDisplayName = getLedgerDisplayName(ledgerData.ledger);
+
+              // Build idLedgerMap for THIS specific ledger - only includes IDs in ledgerData.ids
+              const idLedgerMap: Record<string, { ledger: string; ledgerUrl?: string; ledgerNormalized: string }> = {};
+              for (const id of ledgerData.ids) {
+                const idLedgerInfo = ledgerInfo.ledgerMap?.get(id);
+                if (idLedgerInfo) {
+                  const normalized = normalizeLedgerValue(idLedgerInfo.ledger);
+                  idLedgerMap[id] = {
+                    ledger: idLedgerInfo.ledger,
+                    ledgerUrl: idLedgerInfo.ledgerUrl,
+                    ledgerNormalized: normalized
+                  };
+                } else {
+                  // Fallback: use the ledger's own info
+                  idLedgerMap[id] = {
+                    ledger: ledgerData.ledger,
+                    ledgerUrl: ledgerData.ledgerUrl,
+                    ledgerNormalized: ledgerNormalized
+                  };
+                }
+              }
 
               // Use the first ID as the primary ID (prefer schema ID over cred def if available)
               const schemaIds = ledgerData.ids.filter(id => id.includes(':2:'));
@@ -505,7 +503,7 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
               ledgerUrl: ledgerInfo.ledgerUrl,
               ledgerDisplayName: ledgerInfo.ledger ? getLedgerDisplayName(ledgerInfo.ledger) : undefined,
               ledgerNormalized: ledgerInfo.ledger ? normalizeLedgerValue(ledgerInfo.ledger) : undefined,
-              idLedgerMap: idLedgerMap
+              idLedgerMap: undefined
             }];
           } else {
             // Single ledger entry - keep all IDs together
