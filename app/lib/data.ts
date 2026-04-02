@@ -312,41 +312,59 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{
     return readmeCache.get(ocabundle)!;
   }
 
-  try {
-    // Convert OCABundle.json path to README.md path
-    const readmePath = ocabundle.replace("OCABundle.json", "README.md");
-    const readmeUrl = `${GITHUB_RAW_URL}/${readmePath}`;
+  // Retry logic for failed fetches
+  const maxRetries = 2;
+  let lastError: Error | null = null;
 
-    const response = await fetch(readmeUrl, {
-      // Add timeout to prevent hanging requests
-      signal: AbortSignal.timeout(5000) // 5 second timeout for README files
-    });
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Convert OCABundle.json path to README.md path
+      const readmePath = ocabundle.replace("OCABundle.json", "README.md");
+      const readmeUrl = `${GITHUB_RAW_URL}/${readmePath}`;
 
-    if (!response.ok) {
-      // Don't log 404s as they're expected for many bundles
-      if (response.status !== 404) {
-        console.warn(`Failed to fetch README for ${ocabundle}: ${response.status}`);
+      const response = await fetch(readmeUrl, {
+        // Add timeout to prevent hanging requests
+        signal: AbortSignal.timeout(10000) // 10 second timeout for README files
+      });
+
+      if (!response.ok) {
+        // Don't log 404s as they're expected for many bundles
+        if (response.status !== 404) {
+          console.warn(`Failed to fetch README for ${ocabundle}: ${response.status}`);
+        }
+        // Don't cache failed results - return empty without caching
+        return {};
       }
-      const emptyResult = {};
-      readmeCache.set(ocabundle, emptyResult);
-      return emptyResult;
-    }
 
-    const readmeContent = await response.text();
-    const ledgerInfo = extractLedgerFromReadme(readmeContent);
+      const readmeContent = await response.text();
+      const ledgerInfo = extractLedgerFromReadme(readmeContent);
 
-    // Cache the result
-    readmeCache.set(ocabundle, ledgerInfo);
-    return ledgerInfo;
-  } catch (error) {
-    // Don't log timeout errors as they're expected for missing README files
-    if (error instanceof Error && !error.name.includes('TimeoutError')) {
-      console.warn(`Error fetching README for ${ocabundle}:`, error.message);
+      // Cache the result only if we got meaningful data
+      if (ledgerInfo.ledgerMap && ledgerInfo.ledgerMap.size > 0) {
+        readmeCache.set(ocabundle, ledgerInfo);
+      }
+      return ledgerInfo;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      // Only retry on timeout errors
+      if (lastError.name.includes('TimeoutError')) {
+        if (attempt < maxRetries) {
+          console.log(`Retry ${attempt + 1}/${maxRetries} for README: ${ocabundle}`);
+          continue;
+        }
+        // If we've reached the max retries, fall through and let the loop end
+      } else {
+        // For non-timeout errors, stop retrying immediately
+        break;
+      }
     }
-    const emptyResult = {};
-    readmeCache.set(ocabundle, emptyResult);
-    return emptyResult;
   }
+
+  // Don't cache failed results - return empty without caching
+  if (lastError && !lastError.name.includes('TimeoutError')) {
+    console.warn(`Error fetching README for ${ocabundle}:`, lastError.message);
+  }
+  return {};
 }
 
 // Enhanced function to fetch bundle list with ledger information
@@ -375,7 +393,7 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
         'Expires': '0'
       },
       // Add timeout to prevent hanging requests
-      signal: AbortSignal.timeout(10000) // 10 second timeout
+      signal: AbortSignal.timeout(15000) // 15 second timeout for bundle list
     });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
