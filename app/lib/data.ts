@@ -347,9 +347,15 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       // Only retry on timeout errors
-      if (attempt < maxRetries && lastError.name.includes('TimeoutError')) {
-        console.log(`Retry ${attempt + 1}/${maxRetries} for README: ${ocabundle}`);
-        continue;
+      if (lastError.name.includes('TimeoutError')) {
+        if (attempt < maxRetries) {
+          console.log(`Retry ${attempt + 1}/${maxRetries} for README: ${ocabundle}`);
+          continue;
+        }
+        // If we've reached the max retries, fall through and let the loop end
+      } else {
+        // For non-timeout errors, stop retrying immediately
+        break;
       }
     }
   }
