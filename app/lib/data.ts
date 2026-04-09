@@ -309,8 +309,11 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{
 }> {
   // Check cache first
   if (readmeCache.has(ocabundle)) {
-    return readmeCache.get(ocabundle)!;
+    const cached = readmeCache.get(ocabundle)!;
+    console.log(`[DEBUG] fetchSchemaReadme cache hit for ${ocabundle}: ledgerMap.size=${cached.ledgerMap?.size ?? 'undefined'}`);
+    return cached;
   }
+  console.log(`[DEBUG] fetchSchemaReadme cache miss for ${ocabundle}`);
 
   // Retry logic for failed fetches
   const maxRetries = 2;
@@ -586,6 +589,13 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
       timestamp: Date.now(),
       baseUrl: currentBaseUrl
     };
+
+    // Debug: Check LTSA bundles in the final result
+    const ltsaBundles = enhancedBundles.filter(b => b.ocabundle.includes('LTSA/property-owner'));
+    console.log(`[DEBUG] fetchOverlayBundleList: Found ${ltsaBundles.length} LTSA bundles`);
+    for (const b of ltsaBundles) {
+      console.log(`[DEBUG] LTSA bundle: id=${b.id}, ledger=${b.ledger}, ledgerNormalized=${b.ledgerNormalized}, ids=${JSON.stringify(b.ids)}, idLedgerMap=${JSON.stringify(Object.keys(b.idLedgerMap || {}))}`);
+    }
 
     return enhancedBundles;
   } catch (error) {
