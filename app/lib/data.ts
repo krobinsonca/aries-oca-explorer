@@ -374,7 +374,7 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{
       if (isTimeout) {
         if (attempt < maxRetries) {
           // Exponential backoff: 2s, 4s, 8s with jitter
-          const delay = (Math.pow(2, attempt) * 1000) + Math.random() * 1000;
+          const delay = (Math.pow(2, attempt + 1) * 1000) + Math.random() * 1000;
           console.log(`Retry ${attempt + 1}/${maxRetries} for README: ${ocabundle} after ${Math.round(delay)}ms`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
@@ -515,11 +515,12 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
                     ledgerNormalized: normalized
                   };
                 } else {
-                  // Fallback: use the ledger's own info
+                  // Fallback: use the README's default ledger info, not the group's ledger
+                  // This handles cases where an ID wasn't found in ledgerInfo.ledgerMap
                   idLedgerMap[id] = {
-                    ledger: ledgerData.ledger,
-                    ledgerUrl: ledgerData.ledgerUrl,
-                    ledgerNormalized: ledgerNormalized
+                    ledger: ledgerInfo.ledger || 'unknown',
+                    ledgerUrl: ledgerInfo.ledgerUrl,
+                    ledgerNormalized: normalizeLedgerValue(ledgerInfo.ledger)
                   };
                 }
               }
