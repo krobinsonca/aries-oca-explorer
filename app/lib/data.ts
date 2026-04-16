@@ -388,7 +388,7 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{
   }
 
   // Cache the failure briefly
-  readmeCache.set(ocabundle, { timestamp: now });
+  readmeCache.set(ocabundle, { timestamp: Date.now() });
   return {};
 }
 
