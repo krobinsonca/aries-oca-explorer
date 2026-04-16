@@ -515,11 +515,12 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
                     ledgerNormalized: normalized
                   };
                 } else {
-                  // Fallback: use the ledger's own info
+                  // Fallback: use the README's default ledger info, not the group's ledger
+                  // This handles cases where an ID wasn't found in ledgerInfo.ledgerMap
                   idLedgerMap[id] = {
-                    ledger: ledgerData.ledger,
-                    ledgerUrl: ledgerData.ledgerUrl,
-                    ledgerNormalized: ledgerNormalized
+                    ledger: ledgerInfo.ledger || 'unknown',
+                    ledgerUrl: ledgerInfo.ledgerUrl,
+                    ledgerNormalized: normalizeLedgerValue(ledgerInfo.ledger)
                   };
                 }
               }
