@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Box, Typography, Link, Tooltip, IconButton, useTheme } from '@mui/material';
 import { constructExplorerUrl } from '@/app/lib/data';
@@ -60,17 +62,14 @@ function IdRow({
   id,
   idLedgerNormalized,
   ledgerNormalized,
-  idLedgerMap,
-  theme,
   showCopy = true,
 }: {
   id: string;
   idLedgerNormalized: string | undefined;
   ledgerNormalized: string | undefined;
-  idLedgerMap?: Record<string, IdLedgerInfo>;
-  theme: any;
   showCopy?: boolean;
 }) {
+  const theme = useTheme();
   const [copied, setCopied] = useState(false);
   const resolvedLedger = idLedgerNormalized ?? ledgerNormalized;
   const explorerUrl = constructExplorerUrl(id, resolvedLedger, [id]);
@@ -120,6 +119,7 @@ function IdRow({
         <Tooltip title={copied ? 'Copied!' : 'Copy ID'} arrow placement="top">
           <IconButton
             size="small"
+            aria-label={copied ? 'Copied!' : 'Copy ID'}
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
@@ -258,8 +258,6 @@ export default function GroupedIdDisplay({
                       id={id}
                       idLedgerNormalized={idLedgerNormalized}
                       ledgerNormalized={ledgerNormalized}
-                      idLedgerMap={idLedgerMap}
-                      theme={theme}
                     />
                   </Box>
                 );
@@ -303,8 +301,6 @@ export default function GroupedIdDisplay({
                       id={id}
                       idLedgerNormalized={idLedgerNormalized}
                       ledgerNormalized={ledgerNormalized}
-                      idLedgerMap={idLedgerMap}
-                      theme={theme}
                     />
                   </Box>
                 );
@@ -347,8 +343,6 @@ export default function GroupedIdDisplay({
             id={ids[0]}
             idLedgerNormalized={getIdLedgerNormalized(ids[0], idLedgerMap, ledgerNormalized)}
             ledgerNormalized={ledgerNormalized}
-            idLedgerMap={idLedgerMap}
-            theme={theme}
           />
         </>
       )}

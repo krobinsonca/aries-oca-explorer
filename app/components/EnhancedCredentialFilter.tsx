@@ -29,7 +29,6 @@ import {
   filterBundles,
   BundleWithLedger,
   isProductionLedger,
-  isNonProductionLedger,
 } from '@/app/lib/data';
 import SimpleCredentialCard from './SimpleCredentialCard';
 import { useLanguage } from '@/app/contexts/Language';

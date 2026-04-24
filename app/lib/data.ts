@@ -950,17 +950,36 @@ export function getAvailableLedgerOptions(bundles: BundleWithLedger[]): LedgerOp
   return options;
 }
 
+const UNKNOWN_LEDGER_KEY = 'unknown';
+const PRODUCTION_LEDGER_KEYS = new Set([
+  'candy-prod',
+  'sovrn-mainnet',
+  'mainnet',
+  'prod',
+]);
+const NON_PRODUCTION_LEDGER_KEYS = new Set([
+  'candy-test',
+  'candy-dev',
+  'sovrin-stagingnet',
+  'bcovrin-test',
+  'test',
+  'dev',
+]);
+
 // Determine if a ledger is a production ledger
 export function isProductionLedger(ledgerNormalized: string | undefined): boolean {
   if (!ledgerNormalized) return false;
-  const prodLedgers = ['candy-prod', 'sovrn-mainnet', 'mainnet', 'prod'];
-  return prodLedgers.some(prod => ledgerNormalized.toLowerCase().includes(prod));
+  const normalized = ledgerNormalized.toLowerCase();
+  if (normalized === UNKNOWN_LEDGER_KEY) return false;
+  return PRODUCTION_LEDGER_KEYS.has(normalized);
 }
 
 // Determine if a ledger is a non-production (dev/test) ledger
 export function isNonProductionLedger(ledgerNormalized: string | undefined): boolean {
   if (!ledgerNormalized) return false;
-  return !isProductionLedger(ledgerNormalized);
+  const normalized = ledgerNormalized.toLowerCase();
+  if (normalized === UNKNOWN_LEDGER_KEY) return false;
+  return NON_PRODUCTION_LEDGER_KEYS.has(normalized);
 }
 
 // Filter bundles based on search criteria
