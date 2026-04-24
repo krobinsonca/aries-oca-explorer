@@ -28,6 +28,8 @@ import {
   getAvailableLedgerOptions,
   filterBundles,
   BundleWithLedger,
+  isProductionLedger,
+  isNonProductionLedger,
 } from '@/app/lib/data';
 import SimpleCredentialCard from './SimpleCredentialCard';
 import { useLanguage } from '@/app/contexts/Language';
@@ -328,38 +330,91 @@ export default function EnhancedCredentialFilter({ options }: EnhancedCredential
         <>
           {filteredBundles.length > 0 && (
             <>
-              {Object.entries(filteredGroupedBundles).map(([ledger, bundles]) => (
-                <Accordion key={ledger} defaultExpanded sx={{ mb: 2 }}>
-                  <AccordionSummary
-                    expandIcon={<ExpandMore />}
-                    aria-controls={`${ledger}-content`}
-                    id={`${ledger}-header`}
-                  >
-                    <Typography variant="h6" component="div">
-                      {bundles[0]?.ledgerDisplayName || ledger || 'Unknown Ledger'}
-                      <Chip
-                        label={bundles.length}
-                        size="small"
-                        sx={{ ml: 2 }}
-                        color="primary"
-                      />
-                    </Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <Grid container spacing={3}>
-                      {bundles.map((bundle) => (
-                        <Grid item xs={12} sm={6} md={4} lg={4} xl={3} key={bundle.id}>
-                          <SimpleCredentialCard
-                            bundle={bundle}
-                            onClick={() => handleBundleSelect(bundle)}
-                            language={language}
+              {Object.entries(filteredGroupedBundles)
+                .sort(([ledgerA], [ledgerB]) => {
+                  // Production ledgers first
+                  const aIsProd = isProductionLedger(ledgerA);
+                  const bIsProd = isProductionLedger(ledgerB);
+                  if (aIsProd && !bIsProd) return -1;
+                  if (!aIsProd && bIsProd) return 1;
+                  return 0;
+                })
+                .map(([ledger, bundles]) => {
+                  const isProd = isProductionLedger(ledger);
+                  return (
+                    <Accordion
+                      key={ledger}
+                      defaultExpanded={isProd}
+                      sx={{
+                        mb: 2,
+                        opacity: isProd ? 1 : 0.75,
+                        '& .MuiAccordionSummary-root': {
+                          minHeight: isProd ? 64 : 48,
+                          '& .MuiAccordionSummary-content': {
+                            my: isProd ? 1.5 : 1,
+                          }
+                        }
+                      }}
+                    >
+                      <AccordionSummary
+                        expandIcon={<ExpandMore />}
+                        aria-controls={`${ledger}-content`}
+                        id={`${ledger}-header`}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          {!isProd && (
+                            <Chip
+                              label="TEST / DEV"
+                              size="small"
+                              sx={{
+                                height: 20,
+                                fontSize: '9px',
+                                fontWeight: 600,
+                                backgroundColor: 'warning.main',
+                                color: 'warning.contrastText',
+                                letterSpacing: '0.05em',
+                              }}
+                            />
+                          )}
+                          <Typography
+                            variant="h6"
+                            component="div"
+                            sx={{
+                              fontWeight: isProd ? 700 : 500,
+                              fontSize: isProd ? '1.1rem' : '0.95rem',
+                            }}
+                          >
+                            {bundles[0]?.ledgerDisplayName || ledger || 'Unknown Ledger'}
+                          </Typography>
+                          <Chip
+                            label={`${bundles.length} bundle${bundles.length !== 1 ? 's' : ''}`}
+                            size="small"
+                            sx={{
+                              ml: 1,
+                              height: isProd ? 24 : 20,
+                              fontSize: isProd ? '11px' : '10px',
+                              fontWeight: isProd ? 600 : 400,
+                            }}
+                            color={isProd ? 'primary' : 'default'}
                           />
+                        </Box>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Grid container spacing={3}>
+                          {bundles.map((bundle) => (
+                            <Grid item xs={12} sm={6} md={4} lg={4} xl={3} key={bundle.id}>
+                              <SimpleCredentialCard
+                                bundle={bundle}
+                                onClick={() => handleBundleSelect(bundle)}
+                                language={language}
+                              />
+                            </Grid>
+                          ))}
                         </Grid>
-                      ))}
-                    </Grid>
-                  </AccordionDetails>
-                </Accordion>
-              ))}
+                      </AccordionDetails>
+                    </Accordion>
+                  );
+                })}
             </>
           )}
         </>
