@@ -42,11 +42,18 @@ export interface BundleFilters {
 }
 
 // Cache for README content to avoid repeated fetches
+// Includes timestamp for TTL-based expiration
 const readmeCache = new Map<string, {
   ledger?: string;
   ledgerUrl?: string;
   ledgerMap?: Map<string, { ledger: string; ledgerUrl?: string }>;
+  timestamp: number;
 }>();
+
+// Cache TTL for successful README fetches: 10 minutes
+const README_CACHE_TTL = 10 * 60 * 1000;
+// Cache TTL for failed README fetches: 30 seconds (short to allow retry later)
+const README_FAIL_CACHE_TTL = 30 * 1000;
 
 // Cache for bundle list to ensure consistency across generateStaticParams and page rendering
 let bundleListCache: {
@@ -152,11 +159,11 @@ function getLedgerExplorerUrl(ledgerNormalized: string | undefined): string | un
 
   switch (ledgerNormalized) {
     case "candy-prod":
-      return "https://candyscan.idlab.org/home/CANDY_PROD";
+      return "https://candyscan.digitaltrust.gov.bc.ca/home/CANDY_PROD";
     case "candy-dev":
-      return "https://candyscan.idlab.org/home/CANDY_DEV";
+      return "https://candyscan.digitaltrust.gov.bc.ca/home/CANDY_DEV";
     case "candy-test":
-      return "https://candyscan.idlab.org/home/CANDY_TEST";
+      return "https://candyscan.digitaltrust.gov.bc.ca/home/CANDY_TEST";
     case "bcovrin-test":
       return "https://indyscan.bcovrin.vonx.io/home/BCOVRIN_TEST";
     default:
@@ -307,13 +314,22 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{
   ledgerUrl?: string;
   ledgerMap?: Map<string, { ledger: string; ledgerUrl?: string }>;
 }> {
-  // Check cache first
+  const now = Date.now();
+
+  // Check cache first (with TTL expiration)
   if (readmeCache.has(ocabundle)) {
-    return readmeCache.get(ocabundle)!;
+    const cached = readmeCache.get(ocabundle)!;
+    const cacheAge = now - cached.timestamp;
+    const ttl = cached.ledgerMap ? README_CACHE_TTL : README_FAIL_CACHE_TTL;
+    if (cacheAge < ttl) {
+      return { ledger: cached.ledger, ledgerUrl: cached.ledgerUrl, ledgerMap: cached.ledgerMap };
+    }
+    // Cache expired, remove it
+    readmeCache.delete(ocabundle);
   }
 
-  // Retry logic for failed fetches
-  const maxRetries = 2;
+  // Retry logic for failed fetches with exponential backoff
+  const maxRetries = 3;
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -322,48 +338,57 @@ export async function fetchSchemaReadme(ocabundle: string): Promise<{
       const readmePath = ocabundle.replace("OCABundle.json", "README.md");
       const readmeUrl = `${GITHUB_RAW_URL}/${readmePath}`;
 
+      // Increased timeout for CI environments (30 seconds)
+      // Use AbortSignal.timeout if available, otherwise fallback
+      const timeoutMs = 30000;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
       const response = await fetch(readmeUrl, {
-        // Add timeout to prevent hanging requests
-        signal: AbortSignal.timeout(10000) // 10 second timeout for README files
+        signal: controller.signal as AbortSignal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         // Don't log 404s as they're expected for many bundles
         if (response.status !== 404) {
           console.warn(`Failed to fetch README for ${ocabundle}: ${response.status}`);
         }
-        // Don't cache failed results - return empty without caching
+        // Cache the failure briefly to avoid hammering
+        readmeCache.set(ocabundle, { timestamp: now });
         return {};
       }
 
       const readmeContent = await response.text();
       const ledgerInfo = extractLedgerFromReadme(readmeContent);
 
-      // Cache the result only if we got meaningful data
-      if (ledgerInfo.ledgerMap && ledgerInfo.ledgerMap.size > 0) {
-        readmeCache.set(ocabundle, ledgerInfo);
-      }
+      // Cache the result with timestamp (even if empty, for short period)
+      readmeCache.set(ocabundle, { ...ledgerInfo, timestamp: now });
       return ledgerInfo;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      // Only retry on timeout errors
-      if (lastError.name.includes('TimeoutError')) {
+      const isTimeout = lastError.name.includes('TimeoutError') ||
+                        lastError.message.includes('aborted');
+
+      if (isTimeout) {
         if (attempt < maxRetries) {
-          console.log(`Retry ${attempt + 1}/${maxRetries} for README: ${ocabundle}`);
+          // Exponential backoff: 2s, 4s, 8s with jitter
+          const delay = (Math.pow(2, attempt + 1) * 1000) + Math.random() * 1000;
+          console.log(`Retry ${attempt + 1}/${maxRetries} for README: ${ocabundle} after ${Math.round(delay)}ms`);
+          await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
-        // If we've reached the max retries, fall through and let the loop end
       } else {
-        // For non-timeout errors, stop retrying immediately
+        // For non-timeout errors, log and stop retrying
+        console.warn(`Error fetching README for ${ocabundle}:`, lastError.message);
         break;
       }
     }
   }
 
-  // Don't cache failed results - return empty without caching
-  if (lastError && !lastError.name.includes('TimeoutError')) {
-    console.warn(`Error fetching README for ${ocabundle}:`, lastError.message);
-  }
+  // Cache the failure briefly
+  readmeCache.set(ocabundle, { timestamp: Date.now() });
   return {};
 }
 
@@ -490,11 +515,12 @@ export async function fetchOverlayBundleList(): Promise<BundleWithLedger[]> {
                     ledgerNormalized: normalized
                   };
                 } else {
-                  // Fallback: use the ledger's own info
+                  // Fallback: use the README's default ledger info, not the group's ledger
+                  // This handles cases where an ID wasn't found in ledgerInfo.ledgerMap
                   idLedgerMap[id] = {
-                    ledger: ledgerData.ledger,
-                    ledgerUrl: ledgerData.ledgerUrl,
-                    ledgerNormalized: ledgerNormalized
+                    ledger: ledgerInfo.ledger || 'unknown',
+                    ledgerUrl: ledgerInfo.ledgerUrl,
+                    ledgerNormalized: normalizeLedgerValue(ledgerInfo.ledger)
                   };
                 }
               }
@@ -922,6 +948,19 @@ export function getAvailableLedgerOptions(bundles: BundleWithLedger[]): LedgerOp
   });
 
   return options;
+}
+
+// Determine if a ledger is a production ledger
+export function isProductionLedger(ledgerNormalized: string | undefined): boolean {
+  if (!ledgerNormalized) return false;
+  const prodLedgers = ['candy-prod', 'sovrn-mainnet', 'mainnet', 'prod'];
+  return prodLedgers.some(prod => ledgerNormalized.toLowerCase().includes(prod));
+}
+
+// Determine if a ledger is a non-production (dev/test) ledger
+export function isNonProductionLedger(ledgerNormalized: string | undefined): boolean {
+  if (!ledgerNormalized) return false;
+  return !isProductionLedger(ledgerNormalized);
 }
 
 // Filter bundles based on search criteria

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, CircularProgress, Typography, Chip, useTheme } from '@mui/material';
 import { OverlayBundle } from '@hyperledger/aries-oca';
 import { CredentialExchangeRecord, CredentialPreviewAttribute, CredentialState } from '@aries-framework/core';
 import { fetchOverlayBundleData } from '@/app/lib/data';
@@ -9,6 +9,7 @@ import CredentialCard from './CredentialCard';
 import { BundleWithLedger } from '@/app/lib/data';
 import { BrandingProvider, useBrandingDispatch, ActionType } from '@/app/contexts/Branding';
 import GroupedIdDisplay from './GroupedIdDisplay';
+
 
 interface SimpleCredentialCardProps {
   bundle: BundleWithLedger;
@@ -222,19 +223,110 @@ function SimpleCredentialCardContent({ bundle, onClick, language = 'en' }: Simpl
   return (
     <Box
       sx={{
-        cursor: 'pointer',
+        position: 'relative',
         display: 'inline-block',
-        transition: 'transform 0.2s, box-shadow 0.2s',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
-        }
+        width: 360,
       }}
-      onClick={onClick}
     >
-      <CredentialCard overlay={overlay || undefined} record={mockRecord || undefined} language={language} />
-      {/* All IDs below the card */}
-      <GroupedIdDisplay ids={bundle.ids || [bundle.id]} ledgerNormalized={bundle.ledgerNormalized} idLedgerMap={bundle.idLedgerMap} />
+      {/* OCA Card with shadow and click */}
+      <Box
+        onClick={onClick}
+        sx={{
+          cursor: 'pointer',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+          borderRadius: 1,
+        }}
+      >
+        <CredentialCard overlay={overlay || undefined} record={mockRecord || undefined} language={language} />
+      </Box>
+      {/* Slim ID bar at bottom - just chips */}
+      <IdBar ids={bundle.ids || [bundle.id]} />
+    </Box>
+  );
+}
+
+// Mini ID bar component with copy chips
+function IdBar({ ids }: {
+  ids: string[];
+}) {
+  const theme = useTheme();
+  const { palette } = theme;
+  const [copied, setCopied] = useState<string | null>(null);
+
+  if (!ids || ids.length === 0) return null;
+
+  // Truncate ID for chip label - make it wider
+  const truncate = (id: string, len: number = 32) => id.length > len ? `${id.slice(0, len)}...` : id;
+
+  const handleCopy = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopied(id);
+      setTimeout(() => setCopied(null), 1500);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  const schemaIds = ids.filter(id => !id.includes(':3:CL:'));
+  const credDefIds = ids.filter(id => id.includes(':3:CL:'));
+
+  return (
+    <Box
+      sx={{
+        backgroundColor: palette.background.paper,
+        borderTop: `1px solid ${palette.divider}`,
+        borderRadius: '0 0 4px 4px',
+        px: 1.5,
+        py: 1,
+      }}
+    >
+      <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', alignItems: 'center' }}>
+        {schemaIds.map((id) => (
+          <Chip
+            key={id}
+            label={copied === id ? `✓ Copied!` : `SchemaID: ${truncate(id, 24)}`}
+            size="small"
+            onClick={(e) => { e.stopPropagation(); handleCopy(id); }}
+            sx={{
+              height: 28,
+              fontSize: '11px',
+              fontFamily: 'monospace',
+              fontWeight: copied === id ? 600 : 400,
+              backgroundColor: palette.action.hover,
+              border: `1px solid ${palette.divider}`,
+              color: palette.text.secondary,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              '&:hover': {
+                backgroundColor: palette.action.selected,
+              },
+            }}
+          />
+        ))}
+        {credDefIds.map((id) => (
+          <Chip
+            key={id}
+            label={copied === id ? `✓ Copied!` : `CredDefID: ${truncate(id, 22)}`}
+            size="small"
+            onClick={(e) => { e.stopPropagation(); handleCopy(id); }}
+            sx={{
+              height: 28,
+              fontSize: '11px',
+              fontFamily: 'monospace',
+              fontWeight: copied === id ? 600 : 400,
+              backgroundColor: palette.action.hover,
+              border: `1px solid ${palette.divider}`,
+              color: palette.text.secondary,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              '&:hover': {
+                backgroundColor: palette.action.selected,
+              },
+            }}
+          />
+        ))}
+      </Box>
     </Box>
   );
 }
